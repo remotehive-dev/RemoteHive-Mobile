@@ -9,11 +9,15 @@ npm install --legacy-peer-deps
 npx expo start
 ```
 
-Scan the QR code below with **Expo Go** (install from Play Store), or press `a` in the terminal for Android emulator.
+## Download APK
 
-![Scan with Expo Go](./assets/qr-repo.png)
+Scan the QR below to download and install the APK directly on your phone (enable "Install from unknown sources" if prompted).
 
-> **Note:** The QR above opens this repo. The **live Expo QR** appears in your terminal when you run `npx expo start` — scan that one to load the app on your phone.
+![Download APK](./assets/qr-download.png)
+
+Or download from the link: [RemoteHive APK](https://expo.dev/artifacts/eas/0YVReNWcRAXLDIcOOU5n5FaglaOw9xw7UWYuiIei_68.apk)
+
+> **For live development:** Run `npx expo start` and scan the QR from the terminal with **Expo Go** (install from Play Store).
 
 ## Without Android Studio (Physical Phone)
 
