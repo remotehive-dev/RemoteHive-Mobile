@@ -2,11 +2,11 @@ import { Stack } from 'expo-router';
 import { ClerkProvider, SignedIn, SignedOut } from '@clerk/clerk-expo';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { View, Text } from 'react-native';
+import Constants from 'expo-constants';
 
 const queryClient = new QueryClient();
 
-// Initial mock for Clerk Key - will be replaced in API wiring phase
-const CLERK_PUBLISHABLE_KEY = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY || "";
+const CLERK_PUBLISHABLE_KEY = Constants.expoConfig?.extra?.clerkPublishableKey || process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY || "";
 
 export default function RootLayout() {
   return (
