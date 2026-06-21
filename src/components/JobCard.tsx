@@ -24,16 +24,16 @@ export function JobCard({ job, onPress }: JobCardProps) {
 
       <View style={styles.details}>
         <View style={styles.detailItem}>
-          <MapPin size={14} color="#666" />
+          <MapPin size={14} stroke="#666" />
           <Text style={styles.detailText}>{job.location}</Text>
         </View>
         <View style={styles.detailItem}>
-          <Clock size={14} color="#666" />
+          <Clock size={14} stroke="#666" />
           <Text style={styles.detailText}>{job.type}</Text>
         </View>
         {job.salary_range && (
           <View style={styles.detailItem}>
-            <DollarSign size={14} color="#666" />
+            <DollarSign size={14} stroke="#666" />
             <Text style={styles.detailText}>{job.salary_range}</Text>
           </View>
         )}

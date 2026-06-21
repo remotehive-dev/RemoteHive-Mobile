@@ -28,10 +28,10 @@ export default function JobDetail() {
     <View style={styles.container}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()}>
-          <ChevronLeft size={24} color="#000" />
+          <ChevronLeft size={24} stroke="#000" />
         </TouchableOpacity>
         <TouchableOpacity>
-          <Share2 size={24} color="#000" />
+          <Share2 size={24} stroke="#000" />
         </TouchableOpacity>
       </View>
 
@@ -42,16 +42,16 @@ export default function JobDetail() {
 
           <View style={styles.metaRow}>
             <View style={styles.metaItem}>
-              <MapPin size={16} color="#666" />
+              <MapPin size={16} stroke="#666" />
               <Text style={styles.metaText}>{job.location}</Text>
             </View>
             <View style={styles.metaItem}>
-              <Clock size={16} color="#666" />
+              <Clock size={16} stroke="#666" />
               <Text style={styles.metaText}>{job.type}</Text>
             </View>
             {job.salary_range && (
               <View style={styles.metaItem}>
-                <DollarSign size={16} color="#666" />
+                <DollarSign size={16} stroke="#666" />
                 <Text style={styles.metaText}>{job.salary_range}</Text>
               </View>
             )}

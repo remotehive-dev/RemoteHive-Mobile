@@ -128,3 +128,19 @@ export async function fetchCourses(): Promise<any[]> {
     return await res.json();
   } catch { return []; }
 }
+
+export async function fetchRoles(): Promise<any[]> {
+  try {
+    const res = await fetch(djangoApiUrl("/api/roles/"));
+    if (!res.ok) return [];
+    return await res.json();
+  } catch { return []; }
+}
+
+export const api = {
+  jobs: getJobs,
+  trending: getTrendingJobs,
+  jobDetail: getJob,
+  roles: fetchRoles,
+  courses: fetchCourses,
+};

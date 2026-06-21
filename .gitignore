@@ -9,3 +9,6 @@ ios/
 *.log
 .env*
 cache-state.xml
+dist/
+.expo-shared/
+expo-env.d.ts

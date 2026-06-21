@@ -14,7 +14,7 @@ export default function RoleSelect() {
         style={styles.roleCard}
         onPress={() => router.replace('/(jobseeker)')}
       >
-        <User size={40} color="#007AFF" />
+        <User size={40} stroke="#007AFF" />
         <View style={styles.roleInfo}>
           <Text style={styles.roleTitle}>Jobseeker</Text>
           <Text style={styles.roleDesc}>Find and apply for remote opportunities</Text>
@@ -25,7 +25,7 @@ export default function RoleSelect() {
         style={styles.roleCard}
         onPress={() => router.replace('/(employer)')}
       >
-        <Briefcase size={40} color="#34C759" />
+        <Briefcase size={40} stroke="#34C759" />
         <View style={styles.roleInfo}>
           <Text style={styles.roleTitle}>Employer</Text>
           <Text style={styles.roleDesc}>Post jobs and find top remote talent</Text>

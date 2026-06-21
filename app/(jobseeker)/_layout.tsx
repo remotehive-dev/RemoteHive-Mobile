@@ -8,28 +8,28 @@ export default function JobseekerLayout() {
         name="index"
         options={{
           title: 'Home',
-          tabBarIcon: ({ color }) => <Home size={24} color={color} />,
+          tabBarIcon: ({ color }) => <Home size={24} stroke={color} />,
         }}
       />
       <Tabs.Screen
         name="jobs"
         options={{
           title: 'Jobs',
-          tabBarIcon: ({ color }) => <Briefcase size={24} color={color} />,
+          tabBarIcon: ({ color }) => <Briefcase size={24} stroke={color} />,
         }}
       />
       <Tabs.Screen
         name="academy"
         options={{
           title: 'Academy',
-          tabBarIcon: ({ color }) => <GraduationCap size={24} color={color} />,
+          tabBarIcon: ({ color }) => <GraduationCap size={24} stroke={color} />,
         }}
       />
       <Tabs.Screen
         name="profile"
         options={{
           title: 'Profile',
-          tabBarIcon: ({ color }) => <User size={24} color={color} />,
+          tabBarIcon: ({ color }) => <User size={24} stroke={color} />,
         }}
       />
     </Tabs>
