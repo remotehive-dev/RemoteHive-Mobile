@@ -4,6 +4,9 @@ on:
   push:
     branches: [main]
 
+env:
+  EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -19,15 +22,11 @@ jobs:
 
       - name: Build APK on EAS
         run: npx eas build --platform android --profile preview --non-interactive
-        env:
-          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
 
       - name: Download APK
         run: |
-          BUILD_ID=$(npx eas build:list --platform android --limit 1 --json 2>/dev/null | npx jq -r '.[0].id')
+          BUILD_ID=$(npx eas build:list --platform android --limit 1 --json 2>/dev/null | npx -y jq -r '.[0].id')
           npx eas build:download "$BUILD_ID" --output RemoteHive.apk
-        env:
-          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
 
       - name: Create Release
         uses: softprops/action-gh-release@v2
