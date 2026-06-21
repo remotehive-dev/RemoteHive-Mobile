@@ -17,27 +17,15 @@ jobs:
       - name: Install dependencies
         run: npm ci --legacy-peer-deps
 
-      - name: Setup Expo
-        uses: expo/expo-github-action@v8
-        with:
-          eas-version: latest
-          token: ${{ secrets.EXPO_TOKEN }}
-
       - name: Build APK on EAS
-        run: npx eas build --platform android --profile preview --non-interactive --no-wait
+        run: npx eas build --platform android --profile preview --non-interactive
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
 
-      - name: Get build ID
-        id: build
-        run: echo "id=$(npx eas build:list --platform android --limit 1 --json | jq -r '.[0].id')" >> $GITHUB_OUTPUT
-        env:
-          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
-
-      - name: Wait for build and download
+      - name: Download APK
         run: |
-          npx eas build:view ${{ steps.build.outputs.id }}
-          npx eas build:download ${{ steps.build.outputs.id }} --output RemoteHive.apk
+          BUILD_ID=$(npx eas build:list --platform android --limit 1 --json 2>/dev/null | npx jq -r '.[0].id')
+          npx eas build:download "$BUILD_ID" --output RemoteHive.apk
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
 
