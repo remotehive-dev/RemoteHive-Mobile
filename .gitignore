@@ -1,0 +1,11 @@
+node_modules/
+.expo/
+.artifacts/
+history-storage/
+indexingStamp/
+project-model-cache/
+android/
+ios/
+*.log
+.env*
+cache-state.xml
