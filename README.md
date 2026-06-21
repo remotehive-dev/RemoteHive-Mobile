@@ -15,17 +15,33 @@ Scan the QR below to download and install the APK directly on your phone (enable
 
 ![Download APK](./assets/qr-download.png)
 
-Or download from the link: [RemoteHive APK](https://expo.dev/artifacts/eas/0YVReNWcRAXLDIcOOU5n5FaglaOw9xw7UWYuiIei_68.apk)
+Or download: [RemoteHive APK (latest)](https://github.com/remotehive-dev/RemoteHive-Mobile/releases/latest/download/RemoteHive.apk)
 
-> **For live development:** Run `npx expo start` and scan the QR from the terminal with **Expo Go** (install from Play Store).
+> **Auto-build:** Every push to `main` triggers a new APK build on Expo servers and creates a GitHub Release. The latest APK is always available at the link above.
+
+> **For live development:** Run `npx expo start` and scan the QR from the terminal with **Expo Go**.
+
+## Automatic Builds
+
+Every push to `main` auto-builds a new APK via GitHub Actions + EAS:
+
+1. Push code to `main`
+2. GitHub Actions runs `eas build` in the cloud
+3. On success, a GitHub Release is created with the APK
+4. Scan the QR above to download the latest version
+
+**Requires one-time setup:** Add your Expo token as a repository secret:
+- Go to repo → Settings → Secrets and variables → Actions
+- Add `EXPO_TOKEN` = your Expo access token
 
 ## Without Android Studio (Physical Phone)
 
 | Method | How |
 |--------|-----|
-| **Expo Go** (easiest) | `npx expo start` → scan QR from terminal with Expo Go app |
-| **EAS APK** | `eas build --platform android --profile preview` → download + install |
-| **Android Studio** | `npx expo run:android` (requires full Android SDK setup) |
+| **APK download** (easiest) | Scan QR above or grab from GitHub Releases |
+| **Expo Go** (live dev) | `npx expo start` → scan QR from terminal |
+| **EAS Build** | `eas build --platform android --profile preview` |
+| **Android Studio** | `npx expo run:android` (requires full Android SDK) |
 
 ## Env Variables
 
