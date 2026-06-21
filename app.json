@@ -12,7 +12,9 @@
       "resizeMode": "contain",
       "backgroundColor": "#007AFF"
     },
-    "assetBundlePatterns": ["**/*"],
+    "assetBundlePatterns": [
+      "**/*"
+    ],
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "in.remotehive.mobile"
@@ -27,17 +29,35 @@
         {
           "action": "VIEW",
           "autoVerify": true,
-          "data": [{ "scheme": "https", "host": "*.remotehive.in" }, { "scheme": "https", "host": "remotehive.in" }],
-          "category": ["BROWSABLE", "DEFAULT"]
+          "data": [
+            {
+              "scheme": "https",
+              "host": "*.remotehive.in"
+            },
+            {
+              "scheme": "https",
+              "host": "remotehive.in"
+            }
+          ],
+          "category": [
+            "BROWSABLE",
+            "DEFAULT"
+          ]
         }
       ]
     },
-    "web": { "favicon": "./assets/favicon.png" },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
     "extra": {
       "clerkPublishableKey": "pk_test_bG92ZWQtbGlnZXItNjcuY2xlcmsuYWNjb3VudHMuZGV2JA",
       "supabaseUrl": "https://kvpgsbnwzsqflkeihnyo.supabase.co",
       "supabaseAnonKey": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt2cGdzYm53enNxZmxrZWlobnlvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU2MjEwMzAsImV4cCI6MjA4MTE5NzAzMH0.7CIYWM3mv_8miF5Oww5uActeNY-AhB07gLRb0X1tqjg",
-      "djangoApiUrl": "https://admin.remotehive.in"
+      "djangoApiUrl": "https://admin.remotehive.in",
+      "router": {},
+      "eas": {
+        "projectId": "fde202b7-1ac2-4ca9-bda1-96c34e0485f7"
+      }
     },
     "plugins": [
       "expo-router",
@@ -46,6 +66,7 @@
     ],
     "experiments": {
       "typedRoutes": true
-    }
+    },
+    "owner": "remotehive"
   }
 }
