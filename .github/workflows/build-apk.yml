@@ -69,11 +69,14 @@ jobs:
           node -e "
 const fs = require('fs');
 let b = fs.readFileSync('android/app/build.gradle', 'utf8');
-b = b.replace(/(android\s*\{)/,
-  '\$1\n    signingConfigs {\n        release {\n            storeFile file(\"remotehive-keystore.jks\")\n            storePassword \"remotehive123\"\n            keyAlias \"remotehive\"\n            keyPassword \"remotehive123\"\n        }\n    }');
-b = b.replace(/(release\s*\{)/,
-  '\$1\n                signingConfig signingConfigs.release');
-fs.writeFileSync('android/app/build.gradle', b);
+// Only inject if not already present (idempotent for cache restores)
+if (!b.includes('remotehive-keystore.jks')) {
+  b = b.replace(/(android\s*\{)/,
+    '\$1\n    signingConfigs {\n        release {\n            storeFile file(\"remotehive-keystore.jks\")\n            storePassword \"remotehive123\"\n            keyAlias \"remotehive\"\n            keyPassword \"remotehive123\"\n        }\n    }');
+  b = b.replace(/(release\s*\{)/,
+    '\$1\n                signingConfig signingConfigs.release');
+  fs.writeFileSync('android/app/build.gradle', b);
+}
 "
 
       - name: Build release APK
