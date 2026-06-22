@@ -24,7 +24,7 @@ jobs:
         id: build
         run: |
           OUTPUT=$(npx eas build --platform android --profile preview --non-interactive --no-wait 2>&1)
-          BUILD_ID=$(echo "$OUTPUT" | grep -oP 'builds/[a-f0-9-]+' | head -1 | sed 's|builds/||')
+          BUILD_ID=$(echo "$OUTPUT" | grep -oE 'builds/[a-f0-9-]+' | head -1 | sed 's|builds/||')
           echo "build_id=$BUILD_ID" >> $GITHUB_OUTPUT
           echo "Build ID: $BUILD_ID"
 
@@ -33,11 +33,29 @@ jobs:
         run: |
           BUILD_ID="${{ steps.build.outputs.build_id }}"
           echo "Waiting for build $BUILD_ID..."
-          npx eas build:wait "$BUILD_ID" 2>&1
-          ARTIFACT_URL=$(npx eas build:list --platform android --limit 1 --json 2>/dev/null | jq -r '.[0].artifacts.applicationArchiveUrl // empty')
-          echo "artifact_url=$ARTIFACT_URL" >> $GITHUB_OUTPUT
-          echo "Artifact URL: $ARTIFACT_URL"
-          npx eas build:download "$BUILD_ID" --out RemoteHive.apk
+          for i in $(seq 1 120); do
+            JSON=$(npx eas build:list --platform android --limit 10 --json 2>/dev/null)
+            STATUS=$(echo "$JSON" | jq -r ".[] | select(.id == \"$BUILD_ID\") | .status")
+            if [ -z "$STATUS" ]; then
+              echo "Build $BUILD_ID not found in list, retrying..."
+              sleep 30; continue
+            fi
+            echo "Status: $STATUS"
+            if [ "$STATUS" = "FINISHED" ]; then
+              ARTIFACT_URL=$(echo "$JSON" | jq -r ".[] | select(.id == \"$BUILD_ID\") | .artifacts.applicationArchiveUrl // empty")
+              echo "artifact_url=$ARTIFACT_URL" >> $GITHUB_OUTPUT
+              echo "Artifact URL: $ARTIFACT_URL"
+              npx eas build:download "$BUILD_ID" --out RemoteHive.apk
+              exit 0
+            fi
+            if [ "$STATUS" = "ERRORED" ] || [ "$STATUS" = "CANCELED" ]; then
+              echo "Build failed with status: $STATUS"
+              exit 1
+            fi
+            sleep 30
+          done
+          echo "Timed out waiting for build"
+          exit 1
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
