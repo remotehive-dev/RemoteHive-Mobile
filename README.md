@@ -15,9 +15,9 @@ Scan the QR below to download and install the APK directly on your phone (enable
 
 ![Download APK](./assets/qr-download.png)
 
-Or download: [RemoteHive APK (latest)](https://github.com/remotehive-dev/RemoteHive-Mobile/releases/latest/download/RemoteHive.apk)
+Or download: [RemoteHive APK (latest build)](https://expo.dev/artifacts/eas/DlIMTX9rNtMlu3g6YqAk5TJploUTEi3nMYY-by3XxSw.apk)
 
-> **Auto-build:** Every push to `main` triggers a new APK build on Expo servers and creates a GitHub Release. The latest APK is always available at the link above.
+> **Auto-build:** Every push to `main` triggers a new APK build via GitHub Actions + EAS. The QR and link above are updated automatically after each build.
 
 > **For live development:** Run `npx expo start` and scan the QR from the terminal with **Expo Go**.
 
