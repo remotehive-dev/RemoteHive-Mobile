@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
 import { colors, spacing, borderRadius } from '../../src/theme';
@@ -8,13 +8,19 @@ import { getSupabase } from '../../src/lib/supabase';
 export default function EmployerAuth() {
   const router = useRouter();
   const { signIn, signUp, isLoading: authLoading, user: empUser } = useEmployerAuth();
+  const redirected = useRef(false);
 
   useEffect(() => {
-    if (!empUser) return;
+    if (!empUser || redirected.current) return;
+    redirected.current = true;
     getSupabase().from('users').select('company_id').eq('supabase_id', empUser.id).maybeSingle().then(({ data }) => {
       router.replace(data?.company_id ? '/(employer)' : '/(auth)/employer-onboarding');
     });
   }, [empUser]);
+
+  if (empUser && !redirected.current) {
+    return <View style={styles.container}><ActivityIndicator size="large" color={colors.secondary} /></View>;
+  }
 
   const [mode, setMode] = useState<'signin' | 'signup'>('signin');
   const [email, setEmail] = useState('');
@@ -32,12 +38,11 @@ export default function EmployerAuth() {
       if (mode === 'signin') {
         const { error: err } = await signIn(email, password);
         if (err) { setError(err); return; }
-        router.replace('/(auth)/employer-onboarding');
+        // useEffect will handle redirect after empUser changes
       } else {
         const { error: err, session } = await signUp(email, password, name);
         if (err) { setError(err); return; }
-        if (session) router.replace('/(auth)/employer-onboarding');
-        else setError('Check your email for confirmation link');
+        if (!session) setError('Check your email for confirmation link');
       }
     } catch (e: any) {
       setError(e.message || 'Authentication failed');

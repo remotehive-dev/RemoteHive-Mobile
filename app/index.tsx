@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { View, Image, StyleSheet, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useUser, useAuth } from '@clerk/clerk-expo';
@@ -11,11 +11,11 @@ export default function SplashScreen() {
   const { isLoaded: clerkLoaded, isSignedIn: clerkSignedIn, user: clerkUser } = useUser();
   const { getToken } = useAuth();
   const { isLoading: empLoading, user: empUser } = useEmployerAuth();
-  const [checking, setChecking] = useState(true);
 
   useEffect(() => {
     if (!clerkLoaded || empLoading) return;
-    const timer = setTimeout(async () => {
+
+    const redirect = async () => {
       try {
         if (clerkSignedIn && clerkUser) {
           const token = await getToken({ template: 'supabase' });
@@ -34,8 +34,8 @@ export default function SplashScreen() {
         console.error('Auth check failed', e);
       }
       router.replace('/(auth)/role-select');
-    }, 1000);
-    return () => clearTimeout(timer);
+    };
+    redirect();
   }, [clerkLoaded, empLoading, clerkSignedIn, clerkUser, empUser]);
 
   return (

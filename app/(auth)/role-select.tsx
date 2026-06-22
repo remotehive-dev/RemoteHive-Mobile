@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useUser } from '@clerk/clerk-expo';
@@ -10,18 +10,24 @@ export default function RoleSelect() {
   const router = useRouter();
   const { isSignedIn, user: clerkUser } = useUser();
   const { user: empUser } = useEmployerAuth();
+  const redirected = useRef(false);
 
   useEffect(() => {
+    if (redirected.current) return;
     if (isSignedIn && clerkUser) {
+      redirected.current = true;
       getSupabase().from('users').select('id').eq('clerk_id', clerkUser.id).maybeSingle().then(({ data }) => {
         router.replace(data ? '/(jobseeker)' : '/(auth)/jobseeker-onboarding');
       });
     } else if (empUser) {
+      redirected.current = true;
       getSupabase().from('users').select('company_id').eq('supabase_id', empUser.id).maybeSingle().then(({ data }) => {
         router.replace(data?.company_id ? '/(employer)' : '/(auth)/employer-onboarding');
       });
     }
   }, [isSignedIn, empUser]);
+
+  if (isSignedIn || empUser) return null;
 
   return (
     <View style={styles.container}>

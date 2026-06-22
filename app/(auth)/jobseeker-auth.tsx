@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, Alert, KeyboardAvoidingView, Platform } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSignIn, useSignUp, useOAuth, useUser } from '@clerk/clerk-expo';
@@ -18,6 +18,7 @@ export default function JobseekerAuth() {
   const { signUp, setActive: setSignUpActive } = useSignUp();
   const { startOAuthFlow: startGoogleOAuth } = useOAuth({ strategy: 'oauth_google' });
   const { startOAuthFlow: startGitHubOAuth } = useOAuth({ strategy: 'oauth_github' });
+  const redirected = useRef(false);
 
   const [step, setStep] = useState<Step>('email');
   const [email, setEmail] = useState('');
@@ -28,11 +29,16 @@ export default function JobseekerAuth() {
   const [checking, setChecking] = useState(false);
 
   useEffect(() => {
-    if (!isSignedIn || !clerkUser) return;
+    if (!isSignedIn || !clerkUser || redirected.current) return;
+    redirected.current = true;
     getSupabase().from('users').select('id').eq('clerk_id', clerkUser.id).maybeSingle().then(({ data }) => {
       router.replace(data ? '/(jobseeker)' : '/(auth)/jobseeker-onboarding');
     });
   }, [isSignedIn]);
+
+  if (isSignedIn && !redirected.current) {
+    return <View style={styles.container}><ActivityIndicator size="large" color={colors.primary} /></View>;
+  }
 
   const checkEmail = async () => {
     if (!email) { setError('Enter your email address'); return; }
@@ -84,7 +90,7 @@ export default function JobseekerAuth() {
       const { createdSessionId, setActive } = await startFn!({ redirectUrl: AuthSession.makeRedirectUri() });
       if (createdSessionId) {
         setActive!({ session: createdSessionId });
-        router.replace('/(auth)/jobseeker-onboarding');
+        // useEffect will handle redirect after isSignedIn changes
       }
     } catch (e: any) {
       setError(e.message || 'OAuth failed');
