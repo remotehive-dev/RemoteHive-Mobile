@@ -103,6 +103,22 @@ export default function JobseekerHome() {
             <Text style={styles.actionIcon}>📄</Text>
             <Text style={styles.actionLabel}>Resume Builder</Text>
           </TouchableOpacity>
+          <TouchableOpacity style={styles.actionCard} onPress={() => router.push('/(jobseeker)/companies')}>
+            <Text style={styles.actionIcon}>🏢</Text>
+            <Text style={styles.actionLabel}>Companies</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.actionCard} onPress={() => router.push('/(jobseeker)/academy')}>
+            <Text style={styles.actionIcon}>🎓</Text>
+            <Text style={styles.actionLabel}>Academy</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.actionCard} onPress={() => router.push('/(jobseeker)/store')}>
+            <Text style={styles.actionIcon}>🛒</Text>
+            <Text style={styles.actionLabel}>Gadgets Store</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.actionCard} onPress={() => router.push('/(jobseeker)/auto-apply')}>
+            <Text style={styles.actionIcon}>🤖</Text>
+            <Text style={styles.actionLabel}>Auto-Apply</Text>
+          </TouchableOpacity>
           <TouchableOpacity style={styles.actionCard} onPress={() => router.push('/(jobseeker)/profile')}>
             <Text style={styles.actionIcon}>⚙️</Text>
             <Text style={styles.actionLabel}>Settings</Text>

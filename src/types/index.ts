@@ -45,6 +45,62 @@ export interface Company {
   core_hours?: string;
 }
 
+export interface Category {
+  id: string;
+  name: string;
+  slug: string;
+  icon_url?: string;
+  job_count?: number;
+}
+
+export interface Product {
+  id: string;
+  name: string;
+  description?: string;
+  price: number;
+  original_price?: number;
+  images: string[];
+  category?: string;
+  tags?: string[];
+  rating?: number;
+  review_count?: number;
+  in_stock?: boolean;
+  features?: string[];
+}
+
+export interface Campaign {
+  id: string;
+  user_id: string;
+  title: string;
+  target_role: string;
+  target_location?: string;
+  keywords?: string[];
+  min_salary?: number;
+  max_applications: number;
+  applications_sent: number;
+  status: 'active' | 'paused' | 'completed';
+  created_at: string;
+  updated_at?: string;
+}
+
+export interface Course {
+  id: string;
+  title: string;
+  description?: string;
+  role: string;
+  thumbnail_url?: string;
+  duration?: string;
+  lessons_count?: number;
+  difficulty?: 'beginner' | 'intermediate' | 'advanced';
+  rating?: number;
+  enrolled_count?: number;
+}
+
+export interface CartItem {
+  product: Product;
+  quantity: number;
+}
+
 export interface UserProfile {
   clerk_id: string;
   email: string;
