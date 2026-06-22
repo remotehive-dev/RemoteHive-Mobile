@@ -26,7 +26,7 @@ Scan the QR below to download and install the APK directly on your phone (enable
 Every push to `main` auto-builds a new APK — zero costs, no cloud account needed:
 
 1. Push code to `main`
-2. GitHub Actions runs `npx expo prebuild` + `./gradlew assembleRelease`
+2. GitHub Actions runs `npx expo prebuild` + `./gradlew assembleRelease` (cached — warm builds ~5-8 min vs 25 min cold)
 3. The APK is uploaded to Cloudflare R2 (global CDN, free tier)
 4. The QR above and the badge always point to the latest APK at `dl.remotehive.in`
 

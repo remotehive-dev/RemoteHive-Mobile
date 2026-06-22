@@ -22,11 +22,25 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+          cache: 'npm'
 
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: 17
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3
+        with:
+          gradle-home-cache-cleanup: true
+
+      - name: Cache Android prebuild
+        uses: actions/cache@v4
+        with:
+          path: android/
+          key: android-${{ hashFiles('package-lock.json', 'app.json') }}
+          restore-keys: |
+            android-
 
       - name: Install Android SDK components
         run: |
@@ -47,7 +61,7 @@ jobs:
             -dname "CN=RemoteHive, OU=Engineering, O=RemoteHive, L=San Francisco, ST=CA, C=US"
 
       - name: Prebuild native Android project
-        run: npx expo prebuild --platform android --clean
+        run: npx expo prebuild --platform android
 
       - name: Inject signing config into build.gradle
         run: |
