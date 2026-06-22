@@ -65,6 +65,10 @@ jobs:
           git diff --cached --quiet || git commit -m "chore: update APK download QR [skip ci]"
           git push
 
+      - name: Publish JS update to old APKs via EAS Update
+        run: |
+          npx eas update --branch preview --message "Build #${{ github.run_number }}: ${{ github.event.head_commit.message }}"
+
       - name: Update version info in public releases repo
         run: |
           ARTIFACT_URL="${{ steps.download.outputs.artifact_url }}"
