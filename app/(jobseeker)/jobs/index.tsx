@@ -1,14 +1,15 @@
 import { View, Text, StyleSheet, FlatList, ActivityIndicator, TouchableOpacity, TextInput } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { colors, spacing, borderRadius } from '@/theme';
 import { api } from '@/lib/api';
 
 export default function AllJobs() {
   const router = useRouter();
+  const { category } = useLocalSearchParams<{ category?: string }>();
   const [jobs, setJobs] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState('');
+  const [search, setSearch] = useState(category || '');
   const [showFilters, setShowFilters] = useState(false);
   const [filters, setFilters] = useState({ type: '', remote: false, date: '' });
 

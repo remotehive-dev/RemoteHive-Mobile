@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Alert, Share } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useUser } from '@clerk/clerk-expo';
@@ -14,9 +14,9 @@ export default function JobDetail() {
   const [saved, setSaved] = useState(false);
   const [applying, setApplying] = useState(false);
 
-  useState(() => {
+  useEffect(() => {
     loadJob();
-  });
+  }, [id]);
 
   const loadJob = async () => {
     const supabase = getSupabase();

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
 import { colors, spacing, borderRadius } from '@/theme';
@@ -13,7 +13,7 @@ export default function EmployerDashboard() {
   const [companyId, setCompanyId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
-  useState(() => {
+  useEffect(() => {
     (async () => {
       if (!user?.id) return;
       const supabase = getSupabase();
@@ -25,7 +25,7 @@ export default function EmployerDashboard() {
       }
       setLoading(false);
     })();
-  });
+  }, [user?.id]);
 
   const getApplyRate = () => {
     if (stats.viewsLast30Days > 0) return ((stats.totalApplications / stats.viewsLast30Days) * 100).toFixed(1) + '%';

@@ -8,8 +8,7 @@ export default function AuthLayout() {
       <Stack.Screen name="employer-auth" />
       <Stack.Screen name="jobseeker-onboarding" />
       <Stack.Screen name="employer-onboarding" />
-      <Stack.Screen name="login" />
-      <Stack.Screen name="register" />
+
     </Stack>
   );
 }

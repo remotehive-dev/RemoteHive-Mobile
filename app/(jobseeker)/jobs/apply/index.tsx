@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { View, Text, TextInput, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Alert, KeyboardAvoidingView, Platform } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useUser } from '@clerk/clerk-expo';
@@ -14,12 +14,12 @@ export default function ApplyScreen() {
   const [submitting, setSubmitting] = useState(false);
   const [coverLetter, setCoverLetter] = useState('');
 
-  useState(() => {
+  useEffect(() => {
     getSupabase().from('jobs').select('*, company:companies(*)').eq('id', id).single().then(({ data }) => {
       setJob(data);
       setLoading(false);
     });
-  });
+  }, [id]);
 
   const handleSubmit = async () => {
     if (!user) { Alert.alert('Sign In', 'Sign in to apply'); return; }

@@ -20,10 +20,10 @@ export default function ActivityScreen() {
     try {
       const supabase = getSupabase();
       if (tab === 'applications') {
-        const { data } = await supabase.from('applications').select('*, jobs(*)').eq('user_id', user?.id).order('created_at', { ascending: false });
+        const { data } = await supabase.from('applications').select('*, job:job_id(*)').eq('user_id', user?.id).order('created_at', { ascending: false });
         setApplications(data || []);
       } else {
-        const { data } = await supabase.from('saved_jobs').select('*, jobs(*)').eq('user_id', user?.id).order('created_at', { ascending: false });
+        const { data } = await supabase.from('saved_jobs').select('*, job:job_id(*)').eq('user_id', user?.id).order('created_at', { ascending: false });
         setSavedJobs(data || []);
       }
     } catch {}
@@ -78,11 +78,11 @@ export default function ActivityScreen() {
               <View style={styles.cardHeader}>
                 <View style={styles.cardRow}>
                   <View style={styles.companyIcon}>
-                    <Text style={styles.companyLetter}>{item.jobs?.company_name?.[0] || '?'}</Text>
+                    <Text style={styles.companyLetter}>{item.job?.company_name?.[0] || '?'}</Text>
                   </View>
                   <View style={styles.cardInfo}>
-                    <Text style={styles.jobTitle}>{item.jobs?.title || 'Unknown Job'}</Text>
-                    <Text style={styles.companyName}>{item.jobs?.company_name || 'Unknown Company'}</Text>
+                    <Text style={styles.jobTitle}>{item.job?.title || 'Unknown Job'}</Text>
+                    <Text style={styles.companyName}>{item.job?.company_name || 'Unknown Company'}</Text>
                   </View>
                 </View>
                 {tab === 'applications' && (
