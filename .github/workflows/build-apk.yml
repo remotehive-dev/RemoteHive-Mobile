@@ -4,6 +4,9 @@ on:
   push:
     branches: [main]
 
+permissions:
+  contents: write
+
 env:
   EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
 
@@ -24,16 +27,6 @@ jobs:
 
       - name: Install dependencies
         run: npm ci --legacy-peer-deps
-
-      - name: Generate keystore for signing
-        run: |
-          keytool -genkey -v \
-            -keystore remotehive-keystore.jks \
-            -alias remotehive \
-            -keyalg RSA -keysize 2048 -validity 10000 \
-            -storepass remotehive123 \
-            -keypass remotehive123 \
-            -dname "CN=RemoteHive, OU=Engineering, O=RemoteHive, L=San Francisco, ST=CA, C=US"
 
       - name: Build APK locally (no EAS cloud credits)
         run: |
