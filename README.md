@@ -11,13 +11,13 @@ npx expo start
 
 ## Download APK
 
-[![Download Latest APK](https://img.shields.io/badge/⬇️_Download_Latest_APK-2563EB?style=for-the-badge&logo=android)](https://raw.githubusercontent.com/remotehive-dev/remotehive-releases/main/RemoteHive.apk)
+[![Download Latest APK](https://img.shields.io/badge/⬇️_Download_Latest_APK-2563EB?style=for-the-badge&logo=android)](https://dl.remotehive.in/latest.apk)
 
 Scan the QR below to download and install the APK directly on your phone (enable "Install from unknown sources" if prompted).
 
 ![Download APK](./assets/qr-download.png)
 
-> **Auto-build:** Every push to `main` triggers a new APK build via GitHub Actions (local build, no EAS cloud credits). The badge and QR above always point to the latest build — no manual updates needed.
+> **Auto-build:** Every push to `main` triggers a new APK build. The badge and QR above always point to the latest version — no manual updates needed.
 
 > **For live development:** Run `npx expo start` and scan the QR from the terminal with **Expo Go**.
 
@@ -27,12 +27,15 @@ Every push to `main` auto-builds a new APK — zero cloud build costs:
 
 1. Push code to `main`
 2. GitHub Actions builds the APK locally on the runner via `eas build --local`
-3. The APK is uploaded to GitHub Releases and pushed to the public releases repo
-4. Scan the QR above or click the badge to download the latest version — always the same URL
+3. The APK is uploaded to Cloudflare R2 (global CDN, free tier)
+4. The QR above and the badge always point to the latest APK at `dl.remotehive.in`
 
-**Requires one-time setup:** Add your Expo token as a repository secret:
-- Go to repo → Settings → Secrets and variables → Actions
-- Add `EXPO_TOKEN` = your Expo access token
+**Requires one-time setup:** Add these repository secrets:
+- `EXPO_TOKEN` — your Expo access token
+- `CLOUDFLARE_API_TOKEN` — Cloudflare API token for build
+- `CLOUDFLARE_R2_ACCESS_KEY` / `CLOUDFLARE_R2_SECRET_KEY` — R2 S3 credentials
+- `CLOUDFLARE_R2_ENDPOINT` — `https://2e25186c83a8468a8c7a408f6527f324.r2.cloudflarestorage.com`
+- `CLOUDFLARE_R2_BUCKET` — `remotehive-apks`
 
 ## Without Android Studio (Physical Phone)
 
@@ -64,4 +67,3 @@ EXPO_PUBLIC_DJANGO_API_URL=https://admin.remotehive.in
 
 
 ---
-*Last build trigger: 2026-06-22 16:43*

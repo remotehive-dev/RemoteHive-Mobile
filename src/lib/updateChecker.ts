@@ -1,7 +1,7 @@
 import Constants from 'expo-constants';
 import * as Application from 'expo-application';
 
-const VERSION_URL = 'https://raw.githubusercontent.com/remotehive-dev/remotehive-releases/main/version.json';
+const VERSION_URL = 'https://dl.remotehive.in/version.json';
 
 interface VersionInfo {
   version: string;
