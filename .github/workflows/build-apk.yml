@@ -23,26 +23,17 @@ jobs:
       - name: Build APK on EAS
         id: build
         run: |
-          OUTPUT=$(npx eas build --platform android --profile preview --non-interactive 2>&1)
-          echo "$OUTPUT"
-          # Extract artifact URL from output
-          URL=$(echo "$OUTPUT" | grep -oP 'https://expo\.dev/artifacts/eas/[^"'"'"' \n]+')
-          if [ -n "$URL" ]; then
-            echo "artifact_url=$URL" >> $GITHUB_OUTPUT
-          fi
+          OUTPUT=$(npx eas build --platform android --profile preview --non-interactive --no-wait 2>&1)
+          BUILD_ID=$(echo "$OUTPUT" | grep -oP 'builds/[a-f0-9-]+' | head -1 | sed 's|builds/||')
+          echo "build_id=$BUILD_ID" >> $GITHUB_OUTPUT
+          echo "Build ID: $BUILD_ID"
 
-      - name: Download APK and get URL if not captured
-        if: steps.build.outputs.artifact_url == ''
+      - name: Wait for build and download APK
         run: |
-          BUILD_ID=$(npx eas build:list --platform android --limit 1 --json 2>/dev/null | jq -r '.[0].id')
-          ARTIFACT_URL=$(npx eas build:list --platform android --limit 1 --json 2>/dev/null | jq -r '.[0].artifacts.applicationArchiveUrl // "https://expo.dev/artifacts/eas/\(.[0].id)"')
-          echo "artifact_url=$ARTIFACT_URL" >> $GITHUB_OUTPUT
-          npx eas build:download "$BUILD_ID" --output RemoteHive.apk
-
-      - name: Download APK
-        run: |
-          BUILD_ID=$(npx eas build:list --platform android --limit 1 --json 2>/dev/null | jq -r '.[0].id')
-          npx eas build:download "$BUILD_ID" --output RemoteHive.apk
+          BUILD_ID="${{ steps.build.outputs.build_id }}"
+          echo "Waiting for build $BUILD_ID..."
+          npx eas build:wait "$BUILD_ID" 2>&1
+          npx eas build:download "$BUILD_ID" --out RemoteHive.apk
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
@@ -54,11 +45,10 @@ jobs:
 
       - name: Update README QR with new APK URL
         run: |
-          ARTIFACT_URL="${{ steps.build.outputs.artifact_url }}"
-          if [ -z "$ARTIFACT_URL" ]; then
-            # Parse from build:list output
-            ARTIFACT_URL=$(npx eas build:list --platform android --limit 1 --json 2>/dev/null | jq -r '.[0].artifacts.applicationArchiveUrl // empty')
-          fi
+          BUILD_ID="${{ steps.build.outputs.build_id }}"
+          # Wait for build to finish if not already
+          npx eas build:wait "$BUILD_ID" 2>&1
+          ARTIFACT_URL=$(npx eas build:list --platform android --limit 1 --json 2>/dev/null | jq -r '.[0].artifacts.applicationArchiveUrl // empty')
           if [ -z "$ARTIFACT_URL" ]; then
             echo "Could not get artifact URL, skipping QR update"
             exit 0
