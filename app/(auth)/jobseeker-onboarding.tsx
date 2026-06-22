@@ -43,7 +43,12 @@ export default function JobseekerOnboarding() {
     setLoading(true);
     try {
       const token = await getToken({ template: 'supabase' });
-      const supabase = getSupabase(token || undefined);
+      if (!token) {
+        Alert.alert('Error', 'Could not get auth token. Try signing in again.');
+        setLoading(false);
+        return;
+      }
+      const supabase = getSupabase(token);
       const profile = {
         clerk_id: user?.id,
         email: user?.emailAddresses?.[0]?.emailAddress || '',
@@ -60,7 +65,7 @@ export default function JobseekerOnboarding() {
         linkedin_url: data.linkedin,
         portfolio_url: data.portfolio,
       };
-      const { error } = await supabase.from('users').upsert([profile], { onConflict: 'clerk_id' });
+      const { error } = await supabase.from('users').upsert(profile, { onConflict: 'clerk_id', ignoreDuplicates: false });
       if (error) {
         if (error.code === '23505') { router.replace('/(jobseeker)'); return; }
         Alert.alert('Error', error.message);

@@ -1,12 +1,20 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
 import { colors, spacing, borderRadius } from '../../src/theme';
 import { useEmployerAuth } from '../../src/components/EmployerAuthProvider';
+import { getSupabase } from '../../src/lib/supabase';
 
 export default function EmployerAuth() {
   const router = useRouter();
-  const { signIn, signUp, isLoading: authLoading } = useEmployerAuth();
+  const { signIn, signUp, isLoading: authLoading, user: empUser } = useEmployerAuth();
+
+  useEffect(() => {
+    if (!empUser) return;
+    getSupabase().from('users').select('company_id').eq('supabase_id', empUser.id).maybeSingle().then(({ data }) => {
+      router.replace(data?.company_id ? '/(employer)' : '/(auth)/employer-onboarding');
+    });
+  }, [empUser]);
 
   const [mode, setMode] = useState<'signin' | 'signup'>('signin');
   const [email, setEmail] = useState('');

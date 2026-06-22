@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { View, Image, StyleSheet, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
-import { useUser } from '@clerk/clerk-expo';
+import { useUser, useAuth } from '@clerk/clerk-expo';
 import { colors } from '../src/theme';
 import { useEmployerAuth } from '../src/components/EmployerAuthProvider';
 import { getSupabase } from '../src/lib/supabase';
@@ -9,15 +9,17 @@ import { getSupabase } from '../src/lib/supabase';
 export default function SplashScreen() {
   const router = useRouter();
   const { isLoaded: clerkLoaded, isSignedIn: clerkSignedIn, user: clerkUser } = useUser();
+  const { getToken } = useAuth();
   const { isLoading: empLoading, user: empUser } = useEmployerAuth();
   const [checking, setChecking] = useState(true);
 
   useEffect(() => {
     if (!clerkLoaded || empLoading) return;
-    const checkAuth = async () => {
+    const timer = setTimeout(async () => {
       try {
         if (clerkSignedIn && clerkUser) {
-          const supabase = getSupabase();
+          const token = await getToken({ template: 'supabase' });
+          const supabase = getSupabase(token || undefined);
           const { data: profile } = await supabase.from('users').select('id').eq('clerk_id', clerkUser.id).maybeSingle();
           router.replace(profile ? '/(jobseeker)' : '/(auth)/jobseeker-onboarding');
           return;
@@ -28,10 +30,11 @@ export default function SplashScreen() {
           router.replace(profile?.company_id ? '/(employer)' : '/(auth)/employer-onboarding');
           return;
         }
-      } catch {}
+      } catch (e) {
+        console.error('Auth check failed', e);
+      }
       router.replace('/(auth)/role-select');
-    };
-    const timer = setTimeout(checkAuth, 1000);
+    }, 1000);
     return () => clearTimeout(timer);
   }, [clerkLoaded, empLoading, clerkSignedIn, clerkUser, empUser]);
 

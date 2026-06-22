@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
-import { useSignIn, useSignUp, useOAuth } from '@clerk/clerk-expo';
+import { useSignIn, useSignUp, useOAuth, useUser } from '@clerk/clerk-expo';
 import { colors, spacing, borderRadius } from '../../src/theme';
+import { getSupabase } from '../../src/lib/supabase';
 import * as WebBrowser from 'expo-web-browser';
 import * as AuthSession from 'expo-auth-session';
 
@@ -10,10 +11,18 @@ WebBrowser.maybeCompleteAuthSession();
 
 export default function JobseekerAuth() {
   const router = useRouter();
+  const { isSignedIn, user: clerkUser } = useUser();
   const { signIn, setActive: setSignInActive, isLoaded: signInLoaded } = useSignIn();
   const { signUp, setActive: setSignUpActive, isLoaded: signUpLoaded } = useSignUp();
   const { startOAuthFlow: startGoogleOAuth } = useOAuth({ strategy: 'oauth_google' });
   const { startOAuthFlow: startGitHubOAuth } = useOAuth({ strategy: 'oauth_github' });
+
+  useEffect(() => {
+    if (!isSignedIn || !clerkUser) return;
+    getSupabase().from('users').select('id').eq('clerk_id', clerkUser.id).maybeSingle().then(({ data }) => {
+      router.replace(data ? '/(jobseeker)' : '/(auth)/jobseeker-onboarding');
+    });
+  }, [isSignedIn]);
 
   const [mode, setMode] = useState<'signin' | 'signup'>('signin');
   const [email, setEmail] = useState('');

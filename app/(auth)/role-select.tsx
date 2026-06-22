@@ -1,9 +1,27 @@
+import { useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useUser } from '@clerk/clerk-expo';
 import { colors, spacing, borderRadius } from '../../src/theme';
+import { useEmployerAuth } from '../../src/components/EmployerAuthProvider';
+import { getSupabase } from '../../src/lib/supabase';
 
 export default function RoleSelect() {
   const router = useRouter();
+  const { isSignedIn, user: clerkUser } = useUser();
+  const { user: empUser } = useEmployerAuth();
+
+  useEffect(() => {
+    if (isSignedIn && clerkUser) {
+      getSupabase().from('users').select('id').eq('clerk_id', clerkUser.id).maybeSingle().then(({ data }) => {
+        router.replace(data ? '/(jobseeker)' : '/(auth)/jobseeker-onboarding');
+      });
+    } else if (empUser) {
+      getSupabase().from('users').select('company_id').eq('supabase_id', empUser.id).maybeSingle().then(({ data }) => {
+        router.replace(data?.company_id ? '/(employer)' : '/(auth)/employer-onboarding');
+      });
+    }
+  }, [isSignedIn, empUser]);
 
   return (
     <View style={styles.container}>
