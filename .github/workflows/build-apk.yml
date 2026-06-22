@@ -52,24 +52,15 @@ jobs:
       - name: Inject signing config into build.gradle
         run: |
           cp remotehive-keystore.jks android/app/
-          cat >> android/app/build.gradle <<'EOF'
-
-          android {
-            signingConfigs {
-              release {
-                storeFile file("remotehive-keystore.jks")
-                storePassword "remotehive123"
-                keyAlias "remotehive"
-                keyPassword "remotehive123"
-              }
-            }
-            buildTypes {
-              release {
-                signingConfig signingConfigs.release
-              }
-            }
-          }
-          EOF
+          node -e "
+const fs = require('fs');
+let b = fs.readFileSync('android/app/build.gradle', 'utf8');
+b = b.replace(/(android\s*\{)/,
+  '\$1\n    signingConfigs {\n        release {\n            storeFile file(\"remotehive-keystore.jks\")\n            storePassword \"remotehive123\"\n            keyAlias \"remotehive\"\n            keyPassword \"remotehive123\"\n        }\n    }');
+b = b.replace(/(release\s*\{)/,
+  '\$1\n                signingConfig signingConfigs.release');
+fs.writeFileSync('android/app/build.gradle', b);
+"
 
       - name: Build release APK
         run: |
