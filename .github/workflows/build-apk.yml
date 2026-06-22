@@ -67,7 +67,7 @@ jobs:
 
       - name: Publish JS update to old APKs via EAS Update
         run: |
-          npx eas update --branch preview --message "Build #${{ github.run_number }}: ${{ github.event.head_commit.message }}"
+          npx eas update --branch preview --environment preview --message "Build #${{ github.run_number }}: ${{ github.event.head_commit.message }}"
 
       - name: Update version info in public releases repo
         run: |
