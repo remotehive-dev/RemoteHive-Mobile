@@ -61,3 +61,7 @@ EXPO_PUBLIC_DJANGO_API_URL=https://admin.remotehive.in
 - **DB:** Supabase (reads), Django REST API (writes with validation)
 - **Routing:** Expo Router (file-based)
 - **State:** TanStack React Query
+
+
+---
+*Last build trigger: 2026-06-22 16:43*
