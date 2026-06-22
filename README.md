@@ -23,16 +23,14 @@ Scan the QR below to download and install the APK directly on your phone (enable
 
 ## Automatic Builds
 
-Every push to `main` auto-builds a new APK — zero cloud build costs:
+Every push to `main` auto-builds a new APK — zero costs, no cloud account needed:
 
 1. Push code to `main`
-2. GitHub Actions builds the APK locally on the runner via `eas build --local`
+2. GitHub Actions runs `npx expo prebuild` + `./gradlew assembleRelease`
 3. The APK is uploaded to Cloudflare R2 (global CDN, free tier)
 4. The QR above and the badge always point to the latest APK at `dl.remotehive.in`
 
 **Requires one-time setup:** Add these repository secrets:
-- `EXPO_TOKEN` — your Expo access token
-- `CLOUDFLARE_API_TOKEN` — Cloudflare API token for build
 - `CLOUDFLARE_R2_ACCESS_KEY` / `CLOUDFLARE_R2_SECRET_KEY` — R2 S3 credentials
 - `CLOUDFLARE_R2_ENDPOINT` — `https://2e25186c83a8468a8c7a408f6527f324.r2.cloudflarestorage.com`
 - `CLOUDFLARE_R2_BUCKET` — `remotehive-apks`
@@ -43,7 +41,7 @@ Every push to `main` auto-builds a new APK — zero cloud build costs:
 |--------|-----|
 | **APK download** (easiest) | Scan QR above or click the download badge |
 | **Expo Go** (live dev) | `npx expo start` → scan QR from terminal |
-| **Local build** | `eas build --local --platform android --profile preview` |
+| **Local build** | `npx expo prebuild --platform android --clean && cd android && ./gradlew assembleRelease` |
 | **Android Studio** | `npx expo run:android` (requires full Android SDK) |
 
 ## Env Variables
@@ -64,6 +62,7 @@ EXPO_PUBLIC_DJANGO_API_URL=https://admin.remotehive.in
 - **DB:** Supabase (reads), Django REST API (writes with validation)
 - **Routing:** Expo Router (file-based)
 - **State:** TanStack React Query
+- **Distribution:** Cloudflare R2 + Worker (`dl.remotehive.in`)
 
 
 ---

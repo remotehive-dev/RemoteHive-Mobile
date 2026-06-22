@@ -55,32 +55,15 @@
       "supabaseAnonKey": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt2cGdzYm53enNxZmxrZWlobnlvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU2MjEwMzAsImV4cCI6MjA4MTE5NzAzMH0.7CIYWM3mv_8miF5Oww5uActeNY-AhB07gLRb0X1tqjg",
       "djangoApiUrl": "https://admin.remotehive.in",
       "rapidapiKey": "78006bf87amsh5f51ac5ed6578e7p1b3f42jsneb267075601b",
-      "router": {},
-      "eas": {
-        "projectId": "fde202b7-1ac2-4ca9-bda1-96c34e0485f7"
-      }
-    },
-    "updates": {
-      "url": "https://u.expo.dev/fde202b7-1ac2-4ca9-bda1-96c34e0485f7",
-      "enabled": true,
-      "fallbackToCacheTimeout": 0,
-      "checkAutomatically": "ON_LOAD",
-      "requestHeaders": {
-        "expo-channel-name": "preview"
-      }
-    },
-    "runtimeVersion": {
-      "policy": "appVersion"
+      "router": {}
     },
     "plugins": [
       "expo-router",
       "expo-secure-store",
-      "expo-web-browser",
-      "expo-updates"
+      "expo-web-browser"
     ],
     "experiments": {
       "typedRoutes": true
-    },
-    "owner": "remotehive"
+    }
   }
 }

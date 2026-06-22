@@ -8,7 +8,6 @@ permissions:
   contents: write
 
 env:
-  EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
   R2_ENDPOINT: ${{ secrets.CLOUDFLARE_R2_ENDPOINT }}
   R2_ACCESS_KEY: ${{ secrets.CLOUDFLARE_R2_ACCESS_KEY }}
   R2_SECRET_KEY: ${{ secrets.CLOUDFLARE_R2_SECRET_KEY }}
@@ -29,22 +28,56 @@ jobs:
           distribution: temurin
           java-version: 17
 
+      - name: Install Android SDK components
+        run: |
+          yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses > /dev/null 2>&1 || true
+          $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "platforms;android-35" "build-tools;35.0.0" 2>&1
+
       - name: Install dependencies
         run: npm ci --legacy-peer-deps
 
-      - name: Build APK locally (no EAS cloud credits)
+      - name: Generate keystore for signing
         run: |
-          npx eas build --platform android --profile preview --local \
-            --non-interactive \
-            --output RemoteHive.apk
+          keytool -genkey -v \
+            -keystore remotehive-keystore.jks \
+            -alias remotehive \
+            -keyalg RSA -keysize 2048 -validity 10000 \
+            -storepass remotehive123 \
+            -keypass remotehive123 \
+            -dname "CN=RemoteHive, OU=Engineering, O=RemoteHive, L=San Francisco, ST=CA, C=US"
 
-      - name: Create GitHub Release (private repo)
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: build-${{ github.run_number }}
-          name: Build #${{ github.run_number }}
-          files: RemoteHive.apk
-          generate_release_notes: true
+      - name: Prebuild native Android project
+        run: npx expo prebuild --platform android --clean
+
+      - name: Inject signing config into build.gradle
+        run: |
+          cp remotehive-keystore.jks android/app/
+          cat >> android/app/build.gradle <<'EOF'
+
+          android {
+            signingConfigs {
+              release {
+                storeFile file("remotehive-keystore.jks")
+                storePassword "remotehive123"
+                keyAlias "remotehive"
+                keyPassword "remotehive123"
+              }
+            }
+            buildTypes {
+              release {
+                signingConfig signingConfigs.release
+              }
+            }
+          }
+          EOF
+
+      - name: Build release APK
+        run: |
+          cd android
+          ./gradlew assembleRelease --no-daemon --max-workers 2
+
+      - name: Rename and prepare APK
+        run: cp android/app/build/outputs/apk/release/app-release.apk RemoteHive.apk
 
       - name: Upload APK to Cloudflare R2
         run: |
@@ -79,7 +112,3 @@ jobs:
           git add README.md
           git diff --cached --quiet || git commit -m "chore: update build number [skip ci]"
           git push
-
-      - name: Publish JS update to old APKs via EAS Update
-        run: |
-          npx eas update --branch preview --environment preview --message "Build #${{ github.run_number }}: ${{ github.event.head_commit.message }}"
