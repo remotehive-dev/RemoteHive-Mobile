@@ -45,7 +45,7 @@ jobs:
               ARTIFACT_URL=$(echo "$JSON" | jq -r ".[] | select(.id == \"$BUILD_ID\") | .artifacts.applicationArchiveUrl // empty")
               echo "artifact_url=$ARTIFACT_URL" >> $GITHUB_OUTPUT
               echo "Artifact URL: $ARTIFACT_URL"
-              npx eas build:download "$BUILD_ID" --out RemoteHive.apk
+              curl -sL "$ARTIFACT_URL" -o RemoteHive.apk
               exit 0
             fi
             if [ "$STATUS" = "ERRORED" ] || [ "$STATUS" = "CANCELED" ]; then
