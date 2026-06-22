@@ -28,11 +28,15 @@ jobs:
           echo "build_id=$BUILD_ID" >> $GITHUB_OUTPUT
           echo "Build ID: $BUILD_ID"
 
-      - name: Wait for build and download APK
+      - name: Wait for build, get artifact URL, and download APK
+        id: download
         run: |
           BUILD_ID="${{ steps.build.outputs.build_id }}"
           echo "Waiting for build $BUILD_ID..."
           npx eas build:wait "$BUILD_ID" 2>&1
+          ARTIFACT_URL=$(npx eas build:list --platform android --limit 1 --json 2>/dev/null | jq -r '.[0].artifacts.applicationArchiveUrl // empty')
+          echo "artifact_url=$ARTIFACT_URL" >> $GITHUB_OUTPUT
+          echo "Artifact URL: $ARTIFACT_URL"
           npx eas build:download "$BUILD_ID" --out RemoteHive.apk
 
       - name: Create GitHub Release
@@ -45,15 +49,11 @@ jobs:
 
       - name: Update README QR with new APK URL
         run: |
-          BUILD_ID="${{ steps.build.outputs.build_id }}"
-          # Wait for build to finish if not already
-          npx eas build:wait "$BUILD_ID" 2>&1
-          ARTIFACT_URL=$(npx eas build:list --platform android --limit 1 --json 2>/dev/null | jq -r '.[0].artifacts.applicationArchiveUrl // empty')
+          ARTIFACT_URL="${{ steps.download.outputs.artifact_url }}"
           if [ -z "$ARTIFACT_URL" ]; then
             echo "Could not get artifact URL, skipping QR update"
             exit 0
           fi
-          echo "Artifact URL: $ARTIFACT_URL"
           # Generate QR code
           curl -s "https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=$ARTIFACT_URL" -o assets/qr-download.png
           # Update README download link
@@ -63,4 +63,25 @@ jobs:
           git config user.email "bot@remotehive.in"
           git add assets/qr-download.png README.md
           git diff --cached --quiet || git commit -m "chore: update APK download QR [skip ci]"
+          git push
+
+      - name: Update version info in public releases repo
+        run: |
+          ARTIFACT_URL="${{ steps.download.outputs.artifact_url }}"
+          if [ -z "$ARTIFACT_URL" ]; then exit 0; fi
+          VERSION_CODE=$(( ${{ github.run_number }} + 1 ))
+          git clone https://x-access-token:${{ secrets.RELEASES_TOKEN }}@github.com/remotehive-dev/remotehive-releases.git /tmp/releases
+          cat > /tmp/releases/version.json <<EOF
+          {
+            "version": "1.0.${{ github.run_number }}",
+            "versionCode": $VERSION_CODE,
+            "apkUrl": "$ARTIFACT_URL",
+            "releaseNotes": "Build #${{ github.run_number }}"
+          }
+          EOF
+          cd /tmp/releases
+          git config user.name "remotehive-bot"
+          git config user.email "bot@remotehive.in"
+          git add version.json
+          git diff --cached --quiet || git commit -m "chore: update to build #${{ github.run_number }}"
           git push

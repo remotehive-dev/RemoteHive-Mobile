@@ -60,10 +60,23 @@
         "projectId": "fde202b7-1ac2-4ca9-bda1-96c34e0485f7"
       }
     },
+    "updates": {
+      "url": "https://u.expo.dev/fde202b7-1ac2-4ca9-bda1-96c34e0485f7",
+      "enabled": true,
+      "fallbackToCacheTimeout": 0,
+      "checkAutomatically": "ON_LOAD",
+      "requestHeaders": {
+        "expo-channel-name": "preview"
+      }
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
     "plugins": [
       "expo-router",
       "expo-secure-store",
-      "expo-web-browser"
+      "expo-web-browser",
+      "expo-updates"
     ],
     "experiments": {
       "typedRoutes": true
