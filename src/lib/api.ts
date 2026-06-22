@@ -111,13 +111,75 @@ export async function updateUserProfile(clerkId: string, updates: Partial<UserPr
 // --- Employer API ---
 
 export async function getEmployerDashboardStats(companyId: string) {
-  // Simplified for MVP UI verification
-  return {
-    activeJobs: 12,
-    totalApplications: 45,
-    viewsLast30Days: 1200,
-  };
+  const supabase = getSupabase();
+  const { count: activeJobs } = await supabase.from('jobs').select('*', { count: 'exact', head: true }).eq('company_id', companyId).in('status', ['active', 'published']);
+  const { count: draftJobs } = await supabase.from('jobs').select('*', { count: 'exact', head: true }).eq('company_id', companyId).eq('status', 'draft');
+  const { count: totalApplications } = await supabase.from('applications').select('*', { count: 'exact', head: true }).in('job_id', supabase.from('jobs').select('id').eq('company_id', companyId) as any);
+  return { activeJobs: activeJobs || 0, draftJobs: draftJobs || 0, totalApplications: totalApplications || 0, viewsLast30Days: 0 };
 }
+
+export async function getEmployerJobs(companyId: string): Promise<any[]> {
+  const supabase = getSupabase();
+  const { data, error } = await supabase.from('jobs').select('*').eq('company_id', companyId).order('posted_at', { ascending: false });
+  if (error) { console.error('Error fetching employer jobs:', error); return []; }
+  return data || [];
+}
+
+export async function createEmployerJob(job: Partial<any>): Promise<any | null> {
+  const supabase = getSupabase();
+  const { data, error } = await supabase.from('jobs').insert(job).select().single();
+  if (error) throw new Error(error.message);
+  return data;
+}
+
+export async function updateEmployerJob(id: string, updates: Partial<any>): Promise<any | null> {
+  const supabase = getSupabase();
+  const { data, error } = await supabase.from('jobs').update(updates).eq('id', id).select().single();
+  if (error) throw new Error(error.message);
+  return data;
+}
+
+export async function getJobApplications(jobId: string): Promise<any[]> {
+  const supabase = getSupabase();
+  const { data, error } = await supabase.from('applications').select('*, user:users(*)').eq('job_id', jobId).order('created_at', { ascending: false });
+  if (error) { console.error('Error fetching applications:', error); return []; }
+  return data || [];
+}
+
+export async function getAllApplications(companyId: string): Promise<any[]> {
+  const supabase = getSupabase();
+  const { data: jobs } = await supabase.from('jobs').select('id').eq('company_id', companyId);
+  if (!jobs || jobs.length === 0) return [];
+  const jobIds = jobs.map(j => j.id);
+  const { data, error } = await supabase.from('applications').select('*, job:jobs(*), user:users(*)').in('job_id', jobIds).order('created_at', { ascending: false });
+  if (error) { console.error('Error fetching all applications:', error); return []; }
+  return data || [];
+}
+
+export async function updateApplicationStatus(id: string, status: string): Promise<any | null> {
+  const supabase = getSupabase();
+  const { data, error } = await supabase.from('applications').update({ status }).eq('id', id).select().single();
+  if (error) throw new Error(error.message);
+  return data;
+}
+
+export async function updateCompany(id: string, updates: Partial<any>): Promise<any | null> {
+  const supabase = getSupabase();
+  const { data, error } = await supabase.from('companies').update(updates).eq('id', id).select().single();
+  if (error) throw new Error(error.message);
+  return data;
+}
+
+// --- Pricing / Subscriptions ---
+
+const PLANS = [
+  { id: 'free', name: 'Free', price: 0, job_posts: 1, applications: 10, features: ['1 active job post', '10 applications/mo', 'Basic analytics'] },
+  { id: 'starter', name: 'Starter', price: 999, job_posts: 5, applications: 100, features: ['5 active job posts', '100 applications/mo', 'Advanced analytics', 'Company profile', 'Support'] },
+  { id: 'growth', name: 'Growth', price: 2999, job_posts: 20, applications: 500, features: ['20 active job posts', '500 applications/mo', 'AI match scoring', 'Priority support', 'Team management'] },
+  { id: 'enterprise', name: 'Enterprise', price: 9999, job_posts: -1, applications: -1, features: ['Unlimited job posts', 'Unlimited applications', 'SSO & Domain verify', 'Dedicated account manager', 'Custom integrations'] },
+];
+
+export function getPricingPlans() { return PLANS; }
 
 // --- Academy API ---
 
@@ -231,4 +293,13 @@ export const api = {
   campaigns: getCampaigns,
   createCampaign,
   updateCampaign,
+  getEmployerDashboardStats,
+  getEmployerJobs,
+  createEmployerJob,
+  updateEmployerJob,
+  getJobApplications,
+  getAllApplications,
+  updateApplicationStatus,
+  updateCompany,
+  getPricingPlans,
 };
