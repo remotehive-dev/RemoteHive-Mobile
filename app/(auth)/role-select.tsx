@@ -1,16 +1,23 @@
 import { useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Image, Animated } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useUser } from '@clerk/clerk-expo';
 import { colors, spacing, borderRadius } from '../../src/theme';
-import { useEmployerAuth } from '../../src/components/EmployerAuthProvider';
 import { getSupabase } from '../../src/lib/supabase';
 
 export default function RoleSelect() {
   const router = useRouter();
   const { isSignedIn, user: clerkUser } = useUser();
-  const { user: empUser } = useEmployerAuth();
   const redirected = useRef(false);
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const slideAnim = useRef(new Animated.Value(30)).current;
+
+  useEffect(() => {
+    Animated.parallel([
+      Animated.timing(fadeAnim, { toValue: 1, duration: 800, useNativeDriver: true }),
+      Animated.timing(slideAnim, { toValue: 0, duration: 800, useNativeDriver: true }),
+    ]).start();
+  }, []);
 
   useEffect(() => {
     if (redirected.current) return;
@@ -19,74 +26,97 @@ export default function RoleSelect() {
       getSupabase().from('users').select('id').eq('clerk_id', clerkUser.id).maybeSingle().then(({ data }) => {
         router.replace(data ? '/(jobseeker)' : '/(auth)/jobseeker-onboarding');
       });
-    } else if (empUser) {
-      redirected.current = true;
-      getSupabase().from('users').select('company_id').eq('supabase_id', empUser.id).maybeSingle().then(({ data }) => {
-        router.replace(data?.company_id ? '/(employer)' : '/(auth)/employer-onboarding');
-      });
     }
-  }, [isSignedIn, empUser]);
+  }, [isSignedIn, clerkUser]);
 
-  if (isSignedIn || empUser) return null;
+  if (isSignedIn) return null;
+
+  const handleGetStarted = () => {
+    router.push('/(auth)/jobseeker-auth');
+  };
 
   return (
     <View style={styles.container}>
-      <View style={styles.topSection}>
+      <Animated.View style={[styles.topSection, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
         <Image source={require('../../assets/logo-original.png')} style={styles.logo} resizeMode="contain" />
         <Text style={styles.title}>RemoteHive</Text>
-        <Text style={styles.subtitle}>Find or hire remote talent worldwide</Text>
-      </View>
+        <Text style={styles.subtitle}>Find your dream remote job</Text>
+      </Animated.View>
 
-      <View style={styles.cardSection}>
-        <Text style={styles.heading}>I am a...</Text>
-
-        <TouchableOpacity style={styles.card} onPress={() => router.push('/(auth)/jobseeker-auth')} activeOpacity={0.9}>
-          <View style={[styles.iconWrap, { backgroundColor: colors.indigo.light }]}>
-            <View style={[styles.iconInner, { backgroundColor: colors.indigo.main }]}>
-              <Text style={styles.iconText}>J</Text>
+      <Animated.View style={[styles.bottomSection, { opacity: fadeAnim }]}>
+        <View style={styles.featureList}>
+          <View style={styles.featureItem}>
+            <Text style={styles.featureIcon}>🔍</Text>
+            <View style={styles.featureText}>
+              <Text style={styles.featureTitle}>Browse 10,000+ remote jobs</Text>
+              <Text style={styles.featureDesc}>From top companies worldwide</Text>
             </View>
           </View>
-          <View style={styles.cardContent}>
-            <Text style={styles.cardTitle}>Job Seeker</Text>
-            <Text style={styles.cardDesc}>Find your dream remote job</Text>
-          </View>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.card} onPress={() => router.push('/(auth)/employer-auth')} activeOpacity={0.9}>
-          <View style={[styles.iconWrap, { backgroundColor: colors.purple.light }]}>
-            <View style={[styles.iconInner, { backgroundColor: colors.purple.main }]}>
-              <Text style={styles.iconText}>E</Text>
+          <View style={styles.featureItem}>
+            <Text style={styles.featureIcon}>⚡</Text>
+            <View style={styles.featureText}>
+              <Text style={styles.featureTitle}>One-tap apply</Text>
+              <Text style={styles.featureDesc}>Apply to jobs in seconds</Text>
             </View>
           </View>
-          <View style={styles.cardContent}>
-            <Text style={styles.cardTitle}>Employer</Text>
-            <Text style={styles.cardDesc}>Hire top remote talent</Text>
+          <View style={styles.featureItem}>
+            <Text style={styles.featureIcon}>📱</Text>
+            <View style={styles.featureText}>
+              <Text style={styles.featureTitle}>Track applications</Text>
+              <Text style={styles.featureDesc}>Stay updated on your job search</Text>
+            </View>
           </View>
+        </View>
+
+        <TouchableOpacity style={styles.primaryBtn} onPress={handleGetStarted} activeOpacity={0.9}>
+          <Text style={styles.primaryBtnText}>Get Started</Text>
         </TouchableOpacity>
-      </View>
+
+        <Text style={styles.footerText}>
+          By continuing, you agree to our Terms & Privacy Policy
+        </Text>
+      </Animated.View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.background },
-  topSection: { alignItems: 'center', paddingTop: 80, paddingBottom: 40 },
-  logo: { width: 100, height: 100, marginBottom: 16 },
-  title: { fontSize: 32, fontWeight: '700', color: colors.text },
-  subtitle: { fontSize: 15, color: colors.textSecondary, marginTop: 6 },
-  cardSection: { flex: 1, paddingHorizontal: spacing.lg, paddingTop: spacing.lg },
-  heading: { fontSize: 18, fontWeight: '600', color: colors.text, marginBottom: spacing.lg },
-  card: {
-    flexDirection: 'row', alignItems: 'center',
-    backgroundColor: colors.card, padding: spacing.lg,
-    borderRadius: borderRadius.lg, marginBottom: spacing.md,
-    borderWidth: 1, borderColor: colors.border,
-    shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 8, elevation: 2,
+  container: { flex: 1, backgroundColor: colors.primary },
+  topSection: { 
+    alignItems: 'center', 
+    paddingTop: 100, 
+    paddingBottom: 40,
+    flex: 1,
+    justifyContent: 'center',
   },
-  iconWrap: { width: 52, height: 52, borderRadius: 16, alignItems: 'center', justifyContent: 'center' },
-  iconInner: { width: 36, height: 36, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
-  iconText: { color: '#fff', fontSize: 18, fontWeight: '700' },
-  cardContent: { marginLeft: spacing.md, flex: 1 },
-  cardTitle: { fontSize: 18, fontWeight: '600', color: colors.text },
-  cardDesc: { fontSize: 13, color: colors.textSecondary, marginTop: 2 },
+  logo: { width: 120, height: 120, marginBottom: 20 },
+  title: { fontSize: 36, fontWeight: '800', color: colors.white, letterSpacing: 0.5 },
+  subtitle: { fontSize: 16, color: colors.white, opacity: 0.85, marginTop: 8 },
+  bottomSection: {
+    backgroundColor: colors.white,
+    borderTopLeftRadius: 32,
+    borderTopRightRadius: 32,
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.xl,
+    paddingBottom: spacing.xl + 20,
+  },
+  featureList: { marginBottom: spacing.xl },
+  featureItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: spacing.md,
+  },
+  featureIcon: { fontSize: 24, marginRight: spacing.md, width: 32 },
+  featureText: { flex: 1 },
+  featureTitle: { fontSize: 15, fontWeight: '600', color: colors.text },
+  featureDesc: { fontSize: 13, color: colors.textSecondary, marginTop: 2 },
+  primaryBtn: {
+    backgroundColor: colors.primary,
+    paddingVertical: 18,
+    borderRadius: borderRadius.lg,
+    alignItems: 'center',
+    marginBottom: spacing.md,
+  },
+  primaryBtnText: { color: colors.white, fontSize: 17, fontWeight: '700' },
+  footerText: { textAlign: 'center', fontSize: 12, color: colors.textTertiary },
 });

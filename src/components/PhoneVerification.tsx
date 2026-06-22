@@ -33,10 +33,46 @@ export default function PhoneVerification({ onVerified }: Props) {
     if (!phone || phone.length < 7) { setError('Enter a valid phone number'); return; }
     setLoading(true);
     setError('');
+    
+    // Validate phone via RapidAPI first
+    try {
+      const validateRes = await fetch(`https://phonenumbervalidatefree.p.rapidapi.com/ts_PhoneNumberValidateTest.jsp?number=${phone}&country=${countryCode.replace('+', '')}`, {
+        headers: {
+          'x-rapidapi-key': '78006bf87amsh5f51ac5ed6578e7p1b3f42jsneb267075601b',
+          'x-rapidapi-host': 'phonenumbervalidatefree.p.rapidapi.com',
+        },
+      });
+      const validateData = await validateRes.json();
+      if (!validateData.valid && validateData.valid !== 'true') {
+        setError('Invalid phone number. Please check and try again.');
+        setLoading(false);
+        return;
+      }
+    } catch {
+      // Continue even if validation fails (network issues)
+    }
+    
     const otpVal = Math.floor(100000 + Math.random() * 900000).toString();
     setGeneratedOtp(otpVal);
-    const sent = await (await import('../lib/phone')).sendOtp(phone, countryCode, otpVal);
-    if (!sent) console.warn('OTP send failed, using dev mode');
+    
+    // Send OTP via Django backend
+    try {
+      const res = await fetch(`https://admin.remotehive.in/api/send-otp/`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone: `${countryCode}${phone}`, otp: otpVal }),
+      });
+      if (!res.ok) {
+        setError('Failed to send OTP. Please try again.');
+        setLoading(false);
+        return;
+      }
+    } catch {
+      setError('Network error. Please check your connection and try again.');
+      setLoading(false);
+      return;
+    }
+    
     setStep('otp');
     setLoading(false);
     startTimer();
@@ -52,13 +88,16 @@ export default function PhoneVerification({ onVerified }: Props) {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.label}>Phone Number</Text>
+      <Text style={styles.header}>Phone Verification Required</Text>
+      <Text style={styles.subheader}>We need to verify your phone number to keep your account secure.</Text>
+      
       {step === 'phone' ? (
         <>
+          <Text style={styles.label}>Phone Number</Text>
           <View style={styles.phoneRow}>
-            <View style={styles.countryPicker}>
+            <TouchableOpacity style={styles.countryPicker}>
               <Text style={styles.countryText}>{countryCode}</Text>
-            </View>
+            </TouchableOpacity>
             <TextInput
               style={[styles.input, styles.phoneInput]}
               placeholder="9876543210"
@@ -105,6 +144,8 @@ export default function PhoneVerification({ onVerified }: Props) {
 
 const styles = StyleSheet.create({
   container: { marginBottom: spacing.lg },
+  header: { fontSize: 18, fontWeight: '700', color: colors.text, marginBottom: spacing.xs },
+  subheader: { fontSize: 13, color: colors.textSecondary, marginBottom: spacing.lg },
   label: { fontSize: 14, fontWeight: '600', color: colors.text, marginBottom: spacing.sm },
   phoneRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   countryPicker: {

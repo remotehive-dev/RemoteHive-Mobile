@@ -121,7 +121,7 @@ export async function getEmployerDashboardStats(companyId: string) {
 export async function getEmployerJobs(companyId: string): Promise<any[]> {
   const supabase = getSupabase();
   const { data, error } = await supabase.from('jobs').select('*').eq('company_id', companyId).order('posted_at', { ascending: false });
-  if (error) { console.error('Error fetching employer jobs:', error); return []; }
+  if (error) { console.error('Error fetching jobs:', error); return []; }
   return data || [];
 }
 

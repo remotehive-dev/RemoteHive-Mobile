@@ -1,13 +1,9 @@
 import { useState, useEffect, useRef } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, Alert, KeyboardAvoidingView, Platform } from 'react-native';
 import { useRouter } from 'expo-router';
-import { useSignIn, useSignUp, useOAuth, useUser } from '@clerk/clerk-expo';
+import { useSignIn, useSignUp, useUser } from '@clerk/clerk-expo';
 import { colors, spacing, borderRadius } from '../../src/theme';
 import { getSupabase } from '../../src/lib/supabase';
-import * as WebBrowser from 'expo-web-browser';
-import * as AuthSession from 'expo-auth-session';
-
-WebBrowser.maybeCompleteAuthSession();
 
 type Step = 'email' | 'signin' | 'signup';
 
@@ -16,8 +12,6 @@ export default function JobseekerAuth() {
   const { isSignedIn, user: clerkUser } = useUser();
   const { signIn, setActive: setSignInActive } = useSignIn();
   const { signUp, setActive: setSignUpActive } = useSignUp();
-  const { startOAuthFlow: startGoogleOAuth } = useOAuth({ strategy: 'oauth_google' });
-  const { startOAuthFlow: startGitHubOAuth } = useOAuth({ strategy: 'oauth_github' });
   const redirected = useRef(false);
 
   const [step, setStep] = useState<Step>('email');
@@ -28,16 +22,42 @@ export default function JobseekerAuth() {
   const [error, setError] = useState('');
   const [checking, setChecking] = useState(false);
 
+  // Handle redirect after sign-in state changes
   useEffect(() => {
     if (!isSignedIn || !clerkUser || redirected.current) return;
     redirected.current = true;
-    getSupabase().from('users').select('id').eq('clerk_id', clerkUser.id).maybeSingle().then(({ data }) => {
-      router.replace(data ? '/(jobseeker)' : '/(auth)/jobseeker-onboarding');
-    });
-  }, [isSignedIn]);
+    
+    const doRedirect = async () => {
+      try {
+        const { data } = await getSupabase()
+          .from('users')
+          .select('id')
+          .eq('clerk_id', clerkUser.id)
+          .maybeSingle();
+        
+        // Use replace to prevent going back to auth screens
+        if (data) {
+          router.replace('/(jobseeker)');
+        } else {
+          router.replace('/(auth)/jobseeker-onboarding');
+        }
+      } catch (e) {
+        console.error('Redirect check failed', e);
+        router.replace('/(auth)/jobseeker-onboarding');
+      }
+    };
+    
+    doRedirect();
+  }, [isSignedIn, clerkUser]);
 
+  // Show loading while redirecting
   if (isSignedIn && !redirected.current) {
-    return <View style={styles.container}><ActivityIndicator size="large" color={colors.primary} /></View>;
+    return (
+      <View style={styles.container}>
+        <ActivityIndicator size="large" color={colors.primary} />
+        <Text style={styles.loadingText}>Signing you in...</Text>
+      </View>
+    );
   }
 
   const checkEmail = async () => {
@@ -45,7 +65,11 @@ export default function JobseekerAuth() {
     setChecking(true);
     setError('');
     try {
-      const { data } = await getSupabase().from('users').select('clerk_id').eq('email', email.toLowerCase().trim()).maybeSingle();
+      const { data } = await getSupabase()
+        .from('users')
+        .select('clerk_id')
+        .eq('email', email.toLowerCase().trim())
+        .maybeSingle();
       if (data?.clerk_id) {
         setStep('signin');
       } else {
@@ -66,14 +90,18 @@ export default function JobseekerAuth() {
         const result = await signIn!.create({ identifier: email, password });
         if (result.status === 'complete') {
           await setSignInActive!({ session: result.createdSessionId });
-          router.replace('/(auth)/jobseeker-onboarding');
+          // Redirect handled by useEffect above after isSignedIn updates
         }
       } else {
         if (!name) { setError('Full name required'); setLoading(false); return; }
-        const result = await signUp!.create({ emailAddress: email, password, firstName: name });
+        const result = await signUp!.create({ 
+          emailAddress: email, 
+          password, 
+          firstName: name 
+        });
         if (result.status === 'complete') {
           await setSignUpActive!({ session: result.createdSessionId });
-          router.replace('/(auth)/jobseeker-onboarding');
+          // Redirect handled by useEffect above after isSignedIn updates
         } else if (result.status === 'missing_requirements') {
           Alert.alert('Verify Email', 'Please check your email for a verification link.');
         }
@@ -84,40 +112,40 @@ export default function JobseekerAuth() {
     setLoading(false);
   };
 
-  const handleOAuth = async (provider: 'google' | 'github') => {
-    try {
-      const startFn = provider === 'google' ? startGoogleOAuth : startGitHubOAuth;
-      const { createdSessionId, setActive } = await startFn!({ redirectUrl: AuthSession.makeRedirectUri() });
-      if (createdSessionId) {
-        setActive!({ session: createdSessionId });
-        // useEffect will handle redirect after isSignedIn changes
-      }
-    } catch (e: any) {
-      setError(e.message || 'OAuth failed');
-    }
-  };
-
   if (step === 'email') {
     return (
       <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.back}><Text style={styles.backText}>← Back</Text></TouchableOpacity>
+        <TouchableOpacity onPress={() => router.back()} style={styles.back}>
+          <Text style={styles.backText}>← Back</Text>
+        </TouchableOpacity>
         <Text style={styles.title}>Get Started</Text>
         <Text style={styles.subtitle}>Enter your email to continue</Text>
-        <TextInput style={styles.input} placeholder="Email address" value={email} onChangeText={setEmail} keyboardType="email-address" autoCapitalize="none" autoFocus />
+        <TextInput 
+          style={styles.input} 
+          placeholder="Email address" 
+          value={email} 
+          onChangeText={setEmail} 
+          keyboardType="email-address" 
+          autoCapitalize="none" 
+          autoFocus 
+        />
         {error ? <Text style={styles.error}>{error}</Text> : null}
         <TouchableOpacity style={styles.primaryBtn} onPress={checkEmail} disabled={checking}>
           {checking ? <ActivityIndicator color="#fff" /> : <Text style={styles.primaryBtnText}>Continue</Text>}
         </TouchableOpacity>
-        <View style={styles.divider}><View style={styles.dividerLine} /><Text style={styles.dividerText}>or</Text><View style={styles.dividerLine} /></View>
-        <TouchableOpacity style={styles.socialBtn} onPress={() => handleOAuth('google')}><Text style={styles.socialBtnText}>Continue with Google</Text></TouchableOpacity>
-        <TouchableOpacity style={styles.socialBtn} onPress={() => handleOAuth('github')}><Text style={styles.socialBtnText}>Continue with GitHub</Text></TouchableOpacity>
+        
+        <View style={styles.footer}>
+          <Text style={styles.footerText}>Secure sign-in powered by Clerk</Text>
+        </View>
       </KeyboardAvoidingView>
     );
   }
 
   return (
     <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
-      <TouchableOpacity onPress={() => { setStep('email'); setError(''); }} style={styles.back}><Text style={styles.backText}>← Change Email</Text></TouchableOpacity>
+      <TouchableOpacity onPress={() => { setStep('email'); setError(''); }} style={styles.back}>
+        <Text style={styles.backText}>← Change Email</Text>
+      </TouchableOpacity>
       <Text style={styles.title}>{step === 'signin' ? 'Welcome Back' : 'Create Account'}</Text>
       <Text style={styles.subtitle}>{step === 'signin' ? `Sign in for ${email}` : `Create account for ${email}`}</Text>
       {step === 'signup' && (
@@ -147,10 +175,8 @@ const styles = StyleSheet.create({
   error: { color: colors.error, fontSize: 13, marginBottom: spacing.sm },
   primaryBtn: { backgroundColor: colors.primary, paddingVertical: 16, borderRadius: borderRadius.md, alignItems: 'center', marginTop: spacing.sm },
   primaryBtnText: { color: colors.white, fontSize: 16, fontWeight: '600' },
-  divider: { flexDirection: 'row', alignItems: 'center', marginVertical: spacing.lg },
-  dividerLine: { flex: 1, height: 1, backgroundColor: colors.border },
-  dividerText: { marginHorizontal: spacing.md, color: colors.textTertiary, fontSize: 14 },
-  socialBtn: { paddingVertical: 14, borderRadius: borderRadius.md, borderWidth: 1, borderColor: colors.border, alignItems: 'center', marginBottom: spacing.sm },
-  socialBtnText: { fontSize: 15, color: colors.text, fontWeight: '500' },
   switchText: { textAlign: 'center', color: colors.primary, fontSize: 14 },
+  loadingText: { marginTop: spacing.md, color: colors.textSecondary, fontSize: 14, textAlign: 'center' },
+  footer: { marginTop: spacing.xl, alignItems: 'center' },
+  footerText: { color: colors.textTertiary, fontSize: 12 },
 });
