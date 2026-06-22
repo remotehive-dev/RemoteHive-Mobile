@@ -1,8 +1,8 @@
 import { Stack } from 'expo-router';
-import { ClerkProvider, SignedIn, SignedOut } from '@clerk/clerk-expo';
+import { ClerkProvider } from '@clerk/clerk-expo';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { View, Text } from 'react-native';
 import Constants from 'expo-constants';
+import { EmployerAuthProvider } from '../src/components/EmployerAuthProvider';
 
 const queryClient = new QueryClient();
 
@@ -12,11 +12,14 @@ export default function RootLayout() {
   return (
     <ClerkProvider publishableKey={CLERK_PUBLISHABLE_KEY}>
       <QueryClientProvider client={queryClient}>
-        <Stack screenOptions={{ headerShown: false }}>
-          <Stack.Screen name="(auth)" options={{ headerShown: false }} />
-          <Stack.Screen name="(jobseeker)" options={{ headerShown: false }} />
-          <Stack.Screen name="(employer)" options={{ headerShown: false }} />
-        </Stack>
+        <EmployerAuthProvider>
+          <Stack screenOptions={{ headerShown: false }}>
+            <Stack.Screen name="index" options={{ headerShown: false }} />
+            <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+            <Stack.Screen name="(jobseeker)" options={{ headerShown: false }} />
+            <Stack.Screen name="(employer)" options={{ headerShown: false }} />
+          </Stack>
+        </EmployerAuthProvider>
       </QueryClientProvider>
     </ClerkProvider>
   );

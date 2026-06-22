@@ -1,80 +1,68 @@
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Briefcase, User } from 'lucide-react-native';
+import { colors, spacing, borderRadius } from '../../src/theme';
 
 export default function RoleSelect() {
   const router = useRouter();
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Choose Your Role</Text>
-      <Text style={styles.subtitle}>Select how you want to use RemoteHive today</Text>
+      <View style={styles.topSection}>
+        <Image source={require('../../assets/logo-original.png')} style={styles.logo} resizeMode="contain" />
+        <Text style={styles.title}>RemoteHive</Text>
+        <Text style={styles.subtitle}>Find or hire remote talent worldwide</Text>
+      </View>
 
-      <TouchableOpacity
-        style={styles.roleCard}
-        onPress={() => router.replace('/(jobseeker)')}
-      >
-        <User size={40} stroke="#007AFF" />
-        <View style={styles.roleInfo}>
-          <Text style={styles.roleTitle}>Jobseeker</Text>
-          <Text style={styles.roleDesc}>Find and apply for remote opportunities</Text>
-        </View>
-      </TouchableOpacity>
+      <View style={styles.cardSection}>
+        <Text style={styles.heading}>I am a...</Text>
 
-      <TouchableOpacity
-        style={styles.roleCard}
-        onPress={() => router.replace('/(employer)')}
-      >
-        <Briefcase size={40} stroke="#34C759" />
-        <View style={styles.roleInfo}>
-          <Text style={styles.roleTitle}>Employer</Text>
-          <Text style={styles.roleDesc}>Post jobs and find top remote talent</Text>
-        </View>
-      </TouchableOpacity>
+        <TouchableOpacity style={styles.card} onPress={() => router.push('/(auth)/jobseeker-auth')} activeOpacity={0.9}>
+          <View style={[styles.iconWrap, { backgroundColor: colors.indigo.light }]}>
+            <View style={[styles.iconInner, { backgroundColor: colors.indigo.main }]}>
+              <Text style={styles.iconText}>J</Text>
+            </View>
+          </View>
+          <View style={styles.cardContent}>
+            <Text style={styles.cardTitle}>Job Seeker</Text>
+            <Text style={styles.cardDesc}>Find your dream remote job</Text>
+          </View>
+        </TouchableOpacity>
+
+        <TouchableOpacity style={styles.card} onPress={() => router.push('/(auth)/employer-auth')} activeOpacity={0.9}>
+          <View style={[styles.iconWrap, { backgroundColor: colors.purple.light }]}>
+            <View style={[styles.iconInner, { backgroundColor: colors.purple.main }]}>
+              <Text style={styles.iconText}>E</Text>
+            </View>
+          </View>
+          <View style={styles.cardContent}>
+            <Text style={styles.cardTitle}>Employer</Text>
+            <Text style={styles.cardDesc}>Hire top remote talent</Text>
+          </View>
+        </TouchableOpacity>
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: 30,
-    justifyContent: 'center',
-    backgroundColor: '#fff',
+  container: { flex: 1, backgroundColor: colors.background },
+  topSection: { alignItems: 'center', paddingTop: 80, paddingBottom: 40 },
+  logo: { width: 100, height: 100, marginBottom: 16 },
+  title: { fontSize: 32, fontWeight: '700', color: colors.text },
+  subtitle: { fontSize: 15, color: colors.textSecondary, marginTop: 6 },
+  cardSection: { flex: 1, paddingHorizontal: spacing.lg, paddingTop: spacing.lg },
+  heading: { fontSize: 18, fontWeight: '600', color: colors.text, marginBottom: spacing.lg },
+  card: {
+    flexDirection: 'row', alignItems: 'center',
+    backgroundColor: colors.card, padding: spacing.lg,
+    borderRadius: borderRadius.lg, marginBottom: spacing.md,
+    borderWidth: 1, borderColor: colors.border,
+    shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 8, elevation: 2,
   },
-  title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    textAlign: 'center',
-    marginBottom: 10,
-  },
-  subtitle: {
-    fontSize: 16,
-    color: '#666',
-    textAlign: 'center',
-    marginBottom: 40,
-  },
-  roleCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 25,
-    backgroundColor: '#f8f9fa',
-    borderRadius: 20,
-    marginBottom: 20,
-    borderWidth: 1,
-    borderColor: '#eee',
-  },
-  roleInfo: {
-    marginLeft: 20,
-    flex: 1,
-  },
-  roleTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-  },
-  roleDesc: {
-    fontSize: 14,
-    color: '#666',
-    marginTop: 4,
-  }
+  iconWrap: { width: 52, height: 52, borderRadius: 16, alignItems: 'center', justifyContent: 'center' },
+  iconInner: { width: 36, height: 36, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
+  iconText: { color: '#fff', fontSize: 18, fontWeight: '700' },
+  cardContent: { marginLeft: spacing.md, flex: 1 },
+  cardTitle: { fontSize: 18, fontWeight: '600', color: colors.text },
+  cardDesc: { fontSize: 13, color: colors.textSecondary, marginTop: 2 },
 });

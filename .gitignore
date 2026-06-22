@@ -14,3 +14,6 @@ dist/
 expo-env.d.ts
 
 RemoteHive.apk
+.env
+.env.local
+assets/splash-temp.png
