@@ -11,13 +11,13 @@ npx expo start
 
 ## Download APK
 
+[![Download Latest APK](https://img.shields.io/badge/⬇️_Download_Latest_APK-2563EB?style=for-the-badge&logo=android)](https://expo.dev/artifacts/eas/D78pzoC3m1IFsLCjcPgv-7j0yWT4oKgw4T6wPaYUCWU.apk)
+
 Scan the QR below to download and install the APK directly on your phone (enable "Install from unknown sources" if prompted).
 
 ![Download APK](./assets/qr-download.png)
 
-Or download: [RemoteHive APK (latest build)](https://expo.dev/artifacts/eas/D78pzoC3m1IFsLCjcPgv-7j0yWT4oKgw4T6wPaYUCWU.apk)
-
-> **Auto-build:** Every push to `main` triggers a new APK build via GitHub Actions + EAS. The QR and link above are updated automatically after each build (build #fbac36f0).
+> **Auto-build:** Every push to `main` triggers a new APK build via GitHub Actions + EAS. The badge and QR above are updated automatically after each build (build #fbac36f0).
 
 > **For live development:** Run `npx expo start` and scan the QR from the terminal with **Expo Go**.
 
