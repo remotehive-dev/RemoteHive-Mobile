@@ -1,35 +1,54 @@
 import { Tabs } from 'expo-router';
-import { Home, Briefcase, GraduationCap, User, MoreHorizontal } from 'lucide-react-native';
+import { LayoutDashboard, Briefcase, Clock, FileText, User } from 'lucide-react-native';
+import { colors } from '../../src/theme';
 
 export default function JobseekerLayout() {
   return (
-    <Tabs screenOptions={{ tabBarActiveTintColor: '#007AFF' }}>
+    <Tabs screenOptions={{
+      tabBarActiveTintColor: colors.primary,
+      tabBarInactiveTintColor: colors.textTertiary,
+      tabBarStyle: {
+        backgroundColor: colors.white,
+        borderTopColor: colors.border,
+        paddingBottom: 4,
+        height: 56,
+      },
+      tabBarLabelStyle: { fontSize: 11, fontWeight: '600' },
+      headerShown: false,
+    }}>
       <Tabs.Screen
         name="index"
         options={{
           title: 'Home',
-          tabBarIcon: ({ color }) => <Home size={24} stroke={color} />,
+          tabBarIcon: ({ color, size }) => <LayoutDashboard size={size} stroke={color} />,
         }}
       />
       <Tabs.Screen
         name="jobs"
         options={{
-          title: 'Jobs',
-          tabBarIcon: ({ color }) => <Briefcase size={24} stroke={color} />,
+          title: 'All Jobs',
+          tabBarIcon: ({ color, size }) => <Briefcase size={size} stroke={color} />,
         }}
       />
       <Tabs.Screen
-        name="academy"
+        name="activity"
         options={{
-          title: 'Academy',
-          tabBarIcon: ({ color }) => <GraduationCap size={24} stroke={color} />,
+          title: 'Activity',
+          tabBarIcon: ({ color, size }) => <Clock size={size} stroke={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="resume"
+        options={{
+          title: 'Resume',
+          tabBarIcon: ({ color, size }) => <FileText size={size} stroke={color} />,
         }}
       />
       <Tabs.Screen
         name="profile"
         options={{
           title: 'Profile',
-          tabBarIcon: ({ color }) => <User size={24} stroke={color} />,
+          tabBarIcon: ({ color, size }) => <User size={size} stroke={color} />,
         }}
       />
     </Tabs>
