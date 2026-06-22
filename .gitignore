@@ -17,3 +17,9 @@ RemoteHive.apk
 .env
 .env.local
 assets/splash-temp.png
+
+# wrangler files
+.wrangler
+.dev.vars*
+!.dev.vars.example
+!.env.example
