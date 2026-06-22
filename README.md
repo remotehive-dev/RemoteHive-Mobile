@@ -11,24 +11,24 @@ npx expo start
 
 ## Download APK
 
-[![Download Latest APK](https://img.shields.io/badge/⬇️_Download_Latest_APK-2563EB?style=for-the-badge&logo=android)](https://expo.dev/artifacts/eas/D78pzoC3m1IFsLCjcPgv-7j0yWT4oKgw4T6wPaYUCWU.apk)
+[![Download Latest APK](https://img.shields.io/badge/⬇️_Download_Latest_APK-2563EB?style=for-the-badge&logo=android)](https://raw.githubusercontent.com/remotehive-dev/remotehive-releases/main/RemoteHive.apk)
 
 Scan the QR below to download and install the APK directly on your phone (enable "Install from unknown sources" if prompted).
 
 ![Download APK](./assets/qr-download.png)
 
-> **Auto-build:** Every push to `main` triggers a new APK build via GitHub Actions + EAS. The badge and QR above are updated automatically after each build (build #fbac36f0).
+> **Auto-build:** Every push to `main` triggers a new APK build via GitHub Actions (local build, no EAS cloud credits). The badge and QR above always point to the latest build — no manual updates needed.
 
 > **For live development:** Run `npx expo start` and scan the QR from the terminal with **Expo Go**.
 
 ## Automatic Builds
 
-Every push to `main` auto-builds a new APK via GitHub Actions + EAS:
+Every push to `main` auto-builds a new APK — zero cloud build costs:
 
 1. Push code to `main`
-2. GitHub Actions runs `eas build` in the cloud
-3. On success, a GitHub Release is created with the APK
-4. Scan the QR above to download the latest version
+2. GitHub Actions builds the APK locally on the runner via `eas build --local`
+3. The APK is uploaded to GitHub Releases and pushed to the public releases repo
+4. Scan the QR above or click the badge to download the latest version — always the same URL
 
 **Requires one-time setup:** Add your Expo token as a repository secret:
 - Go to repo → Settings → Secrets and variables → Actions
@@ -38,9 +38,9 @@ Every push to `main` auto-builds a new APK via GitHub Actions + EAS:
 
 | Method | How |
 |--------|-----|
-| **APK download** (easiest) | Scan QR above or grab from GitHub Releases |
+| **APK download** (easiest) | Scan QR above or click the download badge |
 | **Expo Go** (live dev) | `npx expo start` → scan QR from terminal |
-| **EAS Build** | `eas build --platform android --profile preview` |
+| **Local build** | `eas build --local --platform android --profile preview` |
 | **Android Studio** | `npx expo run:android` (requires full Android SDK) |
 
 ## Env Variables
