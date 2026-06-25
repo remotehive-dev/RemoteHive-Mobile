@@ -51,23 +51,22 @@ jobs:
         shell: powershell
         run: New-Item -ItemType Directory -Force -Path C:\tmp | Out-Null
 
-      - name: Accept licenses and install SDK components
+      - name: Ensure Android SDK licenses and components
         shell: powershell
         run: |
-          $sdk = Join-Path $env:ANDROID_HOME "cmdline-tools\latest\bin\sdkmanager.bat"
-          if (-not (Test-Path $sdk)) {
-            Write-Host "Downloading Android cmdline-tools..."
-            curl.exe -sL "https://dl.google.com/android/repository/commandlinetools-win-11076708_latest.zip" -o "$env:TMP\cmdline-tools.zip"
-            Expand-Archive -Path "$env:TMP\cmdline-tools.zip" -DestinationPath "$env:TMP\cmdline-tools" -Force
-            New-Item -ItemType Directory -Force -Path "$env:ANDROID_HOME\cmdline-tools\latest" | Out-Null
-            Copy-Item -Recurse -Force "$env:TMP\cmdline-tools\cmdline-tools\*" "$env:ANDROID_HOME\cmdline-tools\latest\"
-            Remove-Item -Recurse -Force "$env:TMP\cmdline-tools", "$env:TMP\cmdline-tools.zip"
-            $sdk = Join-Path $env:ANDROID_HOME "cmdline-tools\latest\bin\sdkmanager.bat"
-            Write-Host "cmdline-tools installed"
-          }
-          & cmd /c "echo y | `"$sdk`" --licenses 2>&1" | Out-Null
-          & cmd /c "`"$sdk`" `"platforms;android-36`" `"build-tools;36.0.0`" 2>&1"
-          if ($LASTEXITCODE -ne 0) { throw "sdkmanager failed" }
+          $licensesDir = Join-Path $env:ANDROID_HOME "licenses"
+          New-Item -ItemType Directory -Force -Path $licensesDir | Out-Null
+          Set-Content -Path (Join-Path $licensesDir "android-sdk-license") -Value "8933bad161af4178b1185d1a37fbf41ea5269c55`n"
+          Set-Content -Path (Join-Path $licensesDir "android-sdk-preview-license") -Value "84831b9409646a918e30573bab4c9c91346d8abd`n"
+          Write-Host "SDK licenses accepted"
+          Write-Host "ANDROID_HOME contents:"
+          Get-ChildItem $env:ANDROID_HOME -Depth 0 -ErrorAction SilentlyContinue | Select-Object Name, Mode | Format-Table -AutoSize
+          Write-Host "Platforms installed:"
+          Get-ChildItem (Join-Path $env:ANDROID_HOME "platforms") -ErrorAction SilentlyContinue | Select-Object Name | Format-Table -AutoSize
+          Write-Host "Build tools installed:"
+          Get-ChildItem (Join-Path $env:ANDROID_HOME "build-tools") -ErrorAction SilentlyContinue | Select-Object Name | Format-Table -AutoSize
+          Write-Host "Cmdline tools:"
+          Get-ChildItem (Join-Path $env:ANDROID_HOME "cmdline-tools") -Recurse -ErrorAction SilentlyContinue | Select-Object Name | Format-Table -AutoSize
 
       - name: Install dependencies
         run: npm ci --legacy-peer-deps
