@@ -72,6 +72,24 @@ jobs:
           Remove-Item -Recurse -Force android/app/.cxx -ErrorAction SilentlyContinue
           Remove-Item -Recurse -Force android/.cxx -ErrorAction SilentlyContinue
 
+      - name: Patch library build.gradle for CMake suppress regeneration
+        shell: powershell
+        run: |
+          $libs = @(
+            "node_modules/react-native-reanimated/android/build.gradle",
+            "node_modules/expo-modules-core/android/build.gradle"
+          )
+          foreach ($lib in $libs) {
+            if (Test-Path $lib) {
+              $content = Get-Content $lib -Raw
+              if ($content -notmatch 'CMAKE_SUPPRESS_REGENERATION') {
+                $content = $content -replace 'cmake\s*\{', 'cmake { arguments "-DCMAKE_SUPPRESS_REGENERATION=ON"'
+                Set-Content -Path $lib -Value $content -Encoding UTF8
+                Write-Host "Patched $lib"
+              }
+            }
+          }
+
       - name: Inject signing config into build.gradle
         shell: powershell
         run: |
