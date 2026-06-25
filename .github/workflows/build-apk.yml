@@ -17,6 +17,7 @@ env:
   TMP: C:\tmp
   TEMP: C:\tmp
   ANDROID_TEMP: C:\tmp
+  CMAKE_NINJA_FORCE_RESPONSE_FILE: "ON"
 
 jobs:
   build:
@@ -38,14 +39,6 @@ jobs:
         uses: gradle/actions/setup-gradle@v3
         with:
           gradle-home-cache-cleanup: true
-
-      - name: Cache Android prebuild
-        uses: actions/cache@v4
-        with:
-          path: android/
-          key: android-${{ hashFiles('package-lock.json', 'app.json') }}
-          restore-keys: |
-            android-
 
       - name: Ensure temp dir
         shell: powershell
@@ -89,7 +82,7 @@ jobs:
         shell: powershell
         run: |
           Set-Location android
-          cmd /c "gradlew.bat assembleRelease --max-workers 2"
+          cmd /c "gradlew.bat assembleRelease --max-workers 1"
           if ($LASTEXITCODE -ne 0) { throw "Gradle build failed" }
 
       - name: Rename and prepare APK
