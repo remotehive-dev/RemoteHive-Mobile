@@ -13,10 +13,14 @@ env:
   R2_SECRET_KEY: ${{ secrets.CLOUDFLARE_R2_SECRET_KEY }}
   R2_BUCKET: ${{ secrets.CLOUDFLARE_R2_BUCKET }}
   GRADLE_OPTS: "-Dorg.gradle.jvmargs=-Xmx4g -Dorg.gradle.daemon=false"
+  ANDROID_HOME: C:\Users\dell\AppData\Local\Android\Sdk
+  TMP: C:\tmp
+  TEMP: C:\tmp
+  ANDROID_TEMP: C:\tmp
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, Windows, android]
     steps:
       - uses: actions/checkout@v4
 
@@ -43,78 +47,96 @@ jobs:
           restore-keys: |
             android-
 
+      - name: Ensure temp dir
+        shell: powershell
+        run: New-Item -ItemType Directory -Force -Path C:\tmp | Out-Null
+
       - name: Install Android SDK components
+        shell: powershell
         run: |
-          yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses > /dev/null 2>&1 || true
-          $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "platforms;android-36" "build-tools;36.0.0" 2>&1
+          $sdk = "${env:ANDROID_HOME}\cmdline-tools\latest\bin\sdkmanager.bat"
+          if (-not (Test-Path $sdk)) { $sdk = "${env:ANDROID_HOME}\cmdline-tools\latest\bin\sdkmanager" }
+          & $sdk --licenses 2>&1 | Out-Null
+          & $sdk "platforms;android-36" "build-tools;36.0.0" 2>&1
 
       - name: Install dependencies
         run: npm ci --legacy-peer-deps
 
       - name: Generate keystore for signing
+        shell: powershell
         run: |
-          keytool -genkey -v \
-            -keystore remotehive-keystore.jks \
-            -alias remotehive \
-            -keyalg RSA -keysize 2048 -validity 10000 \
-            -storepass remotehive123 \
-            -keypass remotehive123 \
+          keytool -genkey -v `
+            -keystore remotehive-keystore.jks `
+            -alias remotehive `
+            -keyalg RSA -keysize 2048 -validity 10000 `
+            -storepass remotehive123 `
+            -keypass remotehive123 `
             -dname "CN=RemoteHive, OU=Engineering, O=RemoteHive, L=San Francisco, ST=CA, C=US"
 
       - name: Clean CMake cache (fix Windows ninja dirty-manifest)
+        shell: powershell
         run: |
-          rm -rf node_modules/expo-modules-core/android/.cxx node_modules/react-native-reanimated/android/.cxx 2>/dev/null || true
-          rm -rf node_modules/react-native-worklets/android/.cxx 2>/dev/null || true
+          Remove-Item -Recurse -Force node_modules/expo-modules-core/android/.cxx -ErrorAction SilentlyContinue
+          Remove-Item -Recurse -Force node_modules/react-native-reanimated/android/.cxx -ErrorAction SilentlyContinue
+          Remove-Item -Recurse -Force node_modules/react-native-worklets/android/.cxx -ErrorAction SilentlyContinue
 
       - name: Prebuild native Android project
         run: npx expo prebuild --platform android
 
       - name: Inject signing config into build.gradle
+        shell: powershell
         run: |
-          cp remotehive-keystore.jks android/app/
+          Copy-Item remotehive-keystore.jks android/app/
           node scripts/inject-signing.js android/app/build.gradle
 
       - name: Build release APK
+        shell: powershell
         run: |
-          cd android
-          ./gradlew assembleRelease --max-workers 2
+          Set-Location android
+          cmd /c "gradlew.bat assembleRelease --max-workers 2"
+          if ($LASTEXITCODE -ne 0) { throw "Gradle build failed" }
 
       - name: Rename and prepare APK
-        run: cp android/app/build/outputs/apk/release/app-release.apk RemoteHive.apk
+        shell: powershell
+        run: Copy-Item android/app/build/outputs/apk/release/app-release.apk RemoteHive.apk
 
       - name: Upload APK to Cloudflare R2
+        shell: powershell
         run: |
-          curl -s -X PUT "$R2_ENDPOINT/$R2_BUCKET/RemoteHive.apk" \
-            --aws-sigv4 "aws:amz:auto:s3" \
-            --user "$R2_ACCESS_KEY:$R2_SECRET_KEY" \
-            -T RemoteHive.apk \
+          curl.exe -s -X PUT "$env:R2_ENDPOINT/$env:R2_BUCKET/RemoteHive.apk" `
+            --aws-sigv4 "aws:amz:auto:s3" `
+            --user "$env:R2_ACCESS_KEY:$env:R2_SECRET_KEY" `
+            -T RemoteHive.apk `
             -w "APK upload: HTTP %{http_code}\n"
 
       - name: Update version.json in R2
+        shell: powershell
         run: |
-          VERSION_CODE=$(( ${{ github.run_number }} + 1 ))
-          cat > /tmp/version.json <<EOF
-          {
-            "version": "1.0.${{ github.run_number }}",
-            "versionCode": $VERSION_CODE,
-            "apkUrl": "https://dl.remotehive.in/latest.apk",
-            "releaseNotes": "Build #${{ github.run_number }}"
-          }
-          EOF
-          curl -s -X PUT "$R2_ENDPOINT/$R2_BUCKET/version.json" \
-            --aws-sigv4 "aws:amz:auto:s3" \
-            --user "$R2_ACCESS_KEY:$R2_SECRET_KEY" \
-            -T /tmp/version.json \
+          $VERSION_CODE = $($env:GITHUB_RUN_NUMBER + 1)
+@"
+{
+  "version": "1.0.${{ github.run_number }}",
+  "versionCode": $VERSION_CODE,
+  "apkUrl": "https://dl.remotehive.in/latest.apk",
+  "releaseNotes": "Build #${{ github.run_number }}"
+}
+"@ | Set-Content -Path $env:TMP\version.json -Encoding ASCII
+          curl.exe -s -X PUT "$env:R2_ENDPOINT/$env:R2_BUCKET/version.json" `
+            --aws-sigv4 "aws:amz:auto:s3" `
+            --user "$env:R2_ACCESS_KEY:$env:R2_SECRET_KEY" `
+            -T $env:TMP\version.json `
             -w "version.json upload: HTTP %{http_code}\n"
 
       - name: Regenerate QR code and update README
+        shell: powershell
         run: |
-          # Regenerate QR code pointing to permanent download URL
-          curl -s "https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=https://dl.remotehive.in/latest.apk" -o assets/qr-download.png
-          # Update build number in README
-          sed -i "s|build #[0-9]*|build #${{ github.run_number }}|g" README.md
+          curl.exe -s "https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=https://dl.remotehive.in/latest.apk" -o assets/qr-download.png
+          (Get-Content README.md) -replace 'build #[0-9]*', "build #${{ github.run_number }}" | Set-Content README.md
           git config user.name "remotehive-bot"
           git config user.email "bot@remotehive.in"
           git add assets/qr-download.png README.md
-          git diff --cached --quiet || git commit -m "chore: update QR + build number [skip ci]"
-          git push
+          git diff --cached --quiet
+          if ($LASTEXITCODE -ne 0) {
+            git commit -m "chore: update QR + build number [skip ci]"
+            git push
+          }
