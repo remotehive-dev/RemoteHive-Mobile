@@ -84,7 +84,7 @@ jobs:
               $content = Get-Content $lib -Raw
               if ($content -notmatch 'CMAKE_SUPPRESS_REGENERATION') {
                 $content = $content -replace 'cmake\s*\{', 'cmake { arguments "-DCMAKE_SUPPRESS_REGENERATION=ON"'
-                Set-Content -Path $lib -Value $content -Encoding UTF8
+                [IO.File]::WriteAllText($lib, $content, [System.Text.Encoding]::UTF8)
                 Write-Host "Patched $lib"
               }
             }
