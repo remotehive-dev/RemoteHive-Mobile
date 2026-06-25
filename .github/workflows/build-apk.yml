@@ -52,10 +52,18 @@ jobs:
         run: New-Item -ItemType Directory -Force -Path C:\tmp | Out-Null
 
       - name: Install Android SDK components
-        shell: bash
+        shell: powershell
         run: |
-          yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses > /dev/null 2>&1 || true
-          $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "platforms;android-36" "build-tools;36.0.0" 2>&1
+          $sdkDir = Join-Path $env:ANDROID_HOME "cmdline-tools\latest\bin"
+          Write-Host "SDK dir: $sdkDir"
+          Get-ChildItem $sdkDir -ErrorAction SilentlyContinue | Select-Object Name | Format-Table -AutoSize
+          $sdk = Join-Path $sdkDir "sdkmanager.bat"
+          if (-not (Test-Path $sdk)) { $sdk = Join-Path $sdkDir "sdkmanager.cmd" }
+          if (-not (Test-Path $sdk)) { $sdk = Join-Path $sdkDir "sdkmanager.exe" }
+          if (-not (Test-Path $sdk)) { $sdk = Join-Path $sdkDir "sdkmanager" }
+          Write-Host "Using SDK manager: $sdk"
+          & cmd /c "`"$sdk`" --licenses 2>&1" | Out-Null
+          & cmd /c "`"$sdk`" `"platforms;android-36`" `"build-tools;36.0.0`" 2>&1"
 
       - name: Install dependencies
         run: npm ci --legacy-peer-deps
