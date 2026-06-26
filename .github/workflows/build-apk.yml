@@ -24,6 +24,12 @@ jobs:
     runs-on: [self-hosted, Windows, android]
     steps:
       - uses: actions/checkout@v4
+        with:
+          clean: false
+
+      - name: Enable long paths for Git
+        shell: powershell
+        run: git config --global core.longPaths true
 
       - uses: actions/setup-node@v4
         with:
@@ -34,6 +40,18 @@ jobs:
         with:
           distribution: temurin
           java-version: 17
+
+      - name: Install CMake 3.28 (fixes Windows ninja dirty-manifest)
+        shell: powershell
+        run: |
+          $cmakeVersion = "3.28.3"
+          $cmakeUrl = "https://github.com/Kitware/CMake/releases/download/v$cmakeVersion/cmake-$cmakeVersion-windows-x86_64.msi"
+          $installer = "$env:TEMP\cmake.msi"
+          Invoke-WebRequest -Uri $cmakeUrl -OutFile $installer
+          Start-Process msiexec.exe -ArgumentList "/i $installer /quiet /norestart ADD_CMAKE_TO_PATH=System" -Wait
+          Remove-Item $installer
+          $env:Path = "C:\Program Files\CMake\bin;" + $env:Path
+          Write-Host "CMake version: $(cmake --version)"
 
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v3
