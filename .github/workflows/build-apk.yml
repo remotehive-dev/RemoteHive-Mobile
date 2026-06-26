@@ -17,7 +17,6 @@ env:
   TMP: C:\tmp
   TEMP: C:\tmp
   ANDROID_TEMP: C:\tmp
-  CMAKE_NINJA_FORCE_RESPONSE_FILE: "ON"
 
 jobs:
   build:
@@ -25,7 +24,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          clean: false
+          clean: true
 
       - name: Enable long paths for Git
         shell: powershell
@@ -41,25 +40,6 @@ jobs:
           distribution: temurin
           java-version: 17
 
-      - name: Upgrade Ninja in SDK (newer ninja handles dirty-manifest)
-        shell: powershell
-        run: |
-          $ninjaVersion = "1.12.1"
-          $ninjaDir = "C:\ninja-$ninjaVersion"
-          $sdkNinjaDir = "$env:ANDROID_HOME\cmake\3.22.1\bin"
-          if (-not (Test-Path "$ninjaDir\ninja.exe")) {
-            $ninjaUrl = "https://github.com/ninja-build/ninja/releases/download/v$ninjaVersion/ninja-win.zip"
-            $zipFile = "$env:TEMP\ninja-$ninjaVersion.zip"
-            Write-Host "Downloading Ninja $ninjaVersion..."
-            Invoke-WebRequest -Uri $ninjaUrl -OutFile $zipFile -UseBasicParsing
-            Write-Host "Extracting..."
-            New-Item -ItemType Directory -Force -Path $ninjaDir | Out-Null
-            Expand-Archive -Path $zipFile -DestinationPath $ninjaDir -Force
-            Remove-Item $zipFile
-          }
-          Copy-Item "$ninjaDir\ninja.exe" "$sdkNinjaDir\ninja.exe" -Force
-          Write-Host "SDK ninja version: $(& "$sdkNinjaDir\ninja.exe" --version)"
-
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v3
         with:
@@ -74,8 +54,8 @@ jobs:
         run: |
           $licensesDir = Join-Path $env:ANDROID_HOME "licenses"
           New-Item -ItemType Directory -Force -Path $licensesDir | Out-Null
-          Set-Content -Path (Join-Path $licensesDir "android-sdk-license") -Value "8933bad161af4178b1185d1a37fbf41ea5269c55`n"
-          Set-Content -Path (Join-Path $licensesDir "android-sdk-preview-license") -Value "84831b9409646a918e30573bab4c9c91346d8abd`n"
+          Set-Content -Path (Join-Path $licensesDir "android-sdk-license") -Value "24333f8a63b6825ea9c5514f83c2827b002a9bda"
+          Set-Content -Path (Join-Path $licensesDir "android-sdk-preview-license") -Value "84831b9409646a918e30573bab4c9c91346d8abd"
 
       - name: Install dependencies
         run: npm ci --legacy-peer-deps
@@ -86,38 +66,16 @@ jobs:
           Remove-Item -Force remotehive-keystore.jks -ErrorAction SilentlyContinue
           keytool -genkey -v -keystore remotehive-keystore.jks -alias remotehive -keyalg RSA -keysize 2048 -validity 10000 -storepass remotehive123 -keypass remotehive123 -dname "CN=RemoteHive, OU=Engineering, O=RemoteHive, L=San Francisco, ST=CA, C=US"
 
-      - name: Prebuild native Android project
-        run: npx expo prebuild --platform android
+      - name: Prebuild native Android project (clean first)
+        run: |
+          npx expo prebuild --platform android --clean
 
-      - name: Clean CMake cache and suppress regeneration (fix Windows ninja dirty-manifest)
+      - name: Clean app build and accept cmake cache
         shell: powershell
         run: |
-          Remove-Item -Recurse -Force node_modules/expo-modules-core/android/.cxx -ErrorAction SilentlyContinue
-          Remove-Item -Recurse -Force node_modules/react-native-reanimated/android/.cxx -ErrorAction SilentlyContinue
-          Remove-Item -Recurse -Force node_modules/react-native-worklets/android/.cxx -ErrorAction SilentlyContinue
-          Remove-Item -Recurse -Force android/app/.cxx -ErrorAction SilentlyContinue
-          Remove-Item -Recurse -Force android/.cxx -ErrorAction SilentlyContinue
-
-      - name: Create local.properties for CMake suppress regeneration
-        shell: powershell
-        run: |
-          $libs = @(
-            "node_modules/react-native-reanimated/android",
-            "node_modules/expo-modules-core/android"
-          )
-          foreach ($lib in $libs) {
-            $propsFile = Join-Path $lib "local.properties"
-            if (Test-Path $propsFile) {
-              $content = Get-Content $propsFile -Raw
-              if ($content -notmatch 'CMAKE_SUPPRESS_REGENERATION') {
-                Add-Content -Path $propsFile -Value "`ncmake.args=-DCMAKE_SUPPRESS_REGENERATION=ON"
-                Write-Host "Updated $propsFile"
-              }
-            } else {
-              Set-Content -Path $propsFile -Value "cmake.args=-DCMAKE_SUPPRESS_REGENERATION=ON" -Encoding ASCII
-              Write-Host "Created $propsFile"
-            }
-          }
+          cd android
+          cmd /c "gradlew.bat clean"
+          cd ..
 
       - name: Inject signing config into build.gradle
         shell: powershell
@@ -128,8 +86,8 @@ jobs:
       - name: Build release APK
         shell: powershell
         run: |
-          Set-Location android
-          cmd /c "gradlew.bat assembleRelease --max-workers 1"
+          cd android
+          cmd /c "gradlew.bat assembleRelease"
           if ($LASTEXITCODE -ne 0) { throw "Gradle build failed" }
 
       - name: Rename and prepare APK
