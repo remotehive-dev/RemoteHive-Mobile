@@ -83,6 +83,7 @@ jobs:
       - name: Generate keystore for signing
         shell: powershell
         run: |
+          Remove-Item -Force remotehive-keystore.jks -ErrorAction SilentlyContinue
           keytool -genkey -v -keystore remotehive-keystore.jks -alias remotehive -keyalg RSA -keysize 2048 -validity 10000 -storepass remotehive123 -keypass remotehive123 -dname "CN=RemoteHive, OU=Engineering, O=RemoteHive, L=San Francisco, ST=CA, C=US"
 
       - name: Prebuild native Android project
