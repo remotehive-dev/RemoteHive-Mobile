@@ -41,33 +41,24 @@ jobs:
           distribution: temurin
           java-version: 17
 
-      - name: Install CMake 3.28 (fixes Windows ninja dirty-manifest)
+      - name: Upgrade Ninja in SDK (newer ninja handles dirty-manifest)
         shell: powershell
         run: |
-          $cmakeVersion = "3.28.3"
-          $cmakeDir = "C:\cmake-$cmakeVersion"
-          if (-not (Test-Path "$cmakeDir\bin\cmake.exe")) {
-            $cmakeUrl = "https://github.com/Kitware/CMake/releases/download/v$cmakeVersion/cmake-$cmakeVersion-windows-x86_64.zip"
-            $zipFile = "$env:TEMP\cmake-$cmakeVersion.zip"
-            Write-Host "Downloading CMake $cmakeVersion..."
-            Invoke-WebRequest -Uri $cmakeUrl -OutFile $zipFile -UseBasicParsing
+          $ninjaVersion = "1.12.1"
+          $ninjaDir = "C:\ninja-$ninjaVersion"
+          $sdkNinjaDir = "$env:ANDROID_HOME\cmake\3.22.1\bin"
+          if (-not (Test-Path "$ninjaDir\ninja.exe")) {
+            $ninjaUrl = "https://github.com/ninja-build/ninja/releases/download/v$ninjaVersion/ninja-win.zip"
+            $zipFile = "$env:TEMP\ninja-$ninjaVersion.zip"
+            Write-Host "Downloading Ninja $ninjaVersion..."
+            Invoke-WebRequest -Uri $ninjaUrl -OutFile $zipFile -UseBasicParsing
             Write-Host "Extracting..."
-            Expand-Archive -Path $zipFile -DestinationPath "C:\" -Force
+            New-Item -ItemType Directory -Force -Path $ninjaDir | Out-Null
+            Expand-Archive -Path $zipFile -DestinationPath $ninjaDir -Force
             Remove-Item $zipFile
-            Rename-Item -Path "C:\cmake-$cmakeVersion-windows-x86_64" -NewName "cmake-$cmakeVersion" -Force
           }
-          "$cmakeDir\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
-          $env:Path = "$cmakeDir\bin;$env:Path"
-          & cmake --version
-
-      - name: Replace SDK CMake with 3.28 (AGP uses SDK cmake, not system)
-        shell: powershell
-        run: |
-          $sdkCmakeDir = "$env:ANDROID_HOME\cmake\3.22.1\bin"
-          $newCmakeDir = "C:\cmake-3.28.3\bin"
-          Write-Host "Replacing SDK cmake ($sdkCmakeDir) with CMake 3.28..."
-          foreach ($f in @("cmake.exe","ctest.exe","cpack.exe")) { Copy-Item "$newCmakeDir\$f" "$sdkCmakeDir\$f" -Force }
-          Write-Host "SDK cmake version now: $(& "$sdkCmakeDir\cmake.exe" --version)"
+          Copy-Item "$ninjaDir\ninja.exe" "$sdkNinjaDir\ninja.exe" -Force
+          Write-Host "SDK ninja version: $(& "$sdkNinjaDir\ninja.exe" --version)"
 
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v3
@@ -98,7 +89,7 @@ jobs:
       - name: Prebuild native Android project
         run: npx expo prebuild --platform android
 
-      - name: Clean CMake cache (fix Windows ninja dirty-manifest)
+      - name: Clean CMake cache and suppress regeneration (fix Windows ninja dirty-manifest)
         shell: powershell
         run: |
           Remove-Item -Recurse -Force node_modules/expo-modules-core/android/.cxx -ErrorAction SilentlyContinue
