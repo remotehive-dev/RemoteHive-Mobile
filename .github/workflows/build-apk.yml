@@ -77,6 +77,11 @@ jobs:
           cmd /c "gradlew.bat clean"
           cd ..
 
+      - name: Set CMake 3.31.6 for native builds
+        shell: powershell
+        run: |
+          "cmake.dir=C\:\\Users\\dell\\AppData\\Local\\Android\\Sdk\\cmake\\3.31.6" | Add-Content android/local.properties
+
       - name: Inject signing config into build.gradle
         shell: powershell
         run: |
