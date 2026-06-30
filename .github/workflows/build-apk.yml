@@ -161,13 +161,18 @@ jobs:
           curl.exe -s -X PUT "$env:R2_ENDPOINT/$env:R2_BUCKET/version.json" --aws-sigv4 "aws:amz:auto:s3" --user "$env:R2_ACCESS_KEY:$env:R2_SECRET_KEY" -T $env:TMP\version.json -w "version.json upload: HTTP %{http_code}`n"
 
       - name: Deploy web app to Cloudflare Workers
+        continue-on-error: true
         shell: powershell
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         run: |
+          Write-Host "=== Web deployment ==="
+          $ErrorActionPreference = 'Continue'
           npx expo export -p web
+          if ($LASTEXITCODE -ne 0) { Write-Warning "Expo web export failed (continuing)"; exit 0 }
           npx wrangler deploy --config wrangler.jsonc
+          if ($LASTEXITCODE -ne 0) { Write-Warning "Wrangler deploy failed (continuing)"; exit 0 }
 
       - name: Regenerate QR code and update README
         shell: powershell
