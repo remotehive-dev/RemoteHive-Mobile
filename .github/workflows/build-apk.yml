@@ -25,6 +25,16 @@ jobs:
       - uses: actions/checkout@v4
         with:
           clean: true
+          persist-credentials: true
+
+      - name: Runner & env diagnostics
+        shell: powershell
+        run: |
+          Write-Host "User:"; whoami
+          Write-Host "Node:"; node --version
+          Write-Host "Java:"; java -version 2>&1
+          Write-Host "ANDROID_HOME exists:"; Test-Path $env:ANDROID_HOME
+          Write-Host "Git remote:"; git remote -v
 
       - name: Enable long paths for Git
         shell: powershell
@@ -131,14 +141,35 @@ jobs:
 
       - name: Regenerate QR code and update README
         shell: powershell
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          $ErrorActionPreference = 'Stop'
+          Write-Host "=== Diagnostics before README update ==="
+          git --version
+          git remote -v
+          git status --porcelain
+          Write-Host "Downloading QR image..."
           curl.exe -s "https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=https://dl.remotehive.in/latest.apk" -o assets/qr-download.png
-          (Get-Content README.md) -replace 'build #[0-9]*', "build #${{ github.run_number }}" | Set-Content README.md
+          if (-not (Test-Path assets/qr-download.png)) {
+            Write-Error "QR download failed: assets/qr-download.png not found"
+          }
+          Write-Host "Updating README build number..."
+          $readme = Get-Content README.md -Raw
+          $new = $readme -replace 'build #[0-9]*', "build #${{ github.run_number }}"
+          if ($new -ne $readme) {
+            $new | Set-Content README.md -Encoding UTF8
+          } else {
+            Write-Host "README already up-to-date."
+          }
           git config user.name "remotehive-bot"
           git config user.email "bot@remotehive.in"
           git add assets/qr-download.png README.md
-          git diff --cached --quiet
-          if ($LASTEXITCODE -ne 0) {
+          $changes = (git status --porcelain)
+          if ($changes) {
+            Write-Host "Committing and pushing changes..."
             git commit -m "chore: update QR + build number [skip ci]"
             git push
+          } else {
+            Write-Host "No changes to commit."
           }
