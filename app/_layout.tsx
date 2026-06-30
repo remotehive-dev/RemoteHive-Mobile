@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
 import { Stack } from 'expo-router';
-import { ClerkProvider } from '@clerk/clerk-expo';
+import { ClerkProvider, useAuth } from '@clerk/clerk-expo';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import Constants from 'expo-constants';
 import { checkForUpdate } from '../src/lib/updateChecker';
 import UpdateDialog from '../src/components/UpdateDialog';
+import tokenCache from '../src/lib/tokenCache';
 
 const queryClient = new QueryClient();
 
@@ -22,7 +23,7 @@ export default function RootLayout() {
   }, []);
 
   return (
-    <ClerkProvider publishableKey={CLERK_PUBLISHABLE_KEY}>
+    <ClerkProvider publishableKey={CLERK_PUBLISHABLE_KEY} tokenCache={tokenCache}>
       <QueryClientProvider client={queryClient}>
         <Stack screenOptions={{ headerShown: false }}>
           <Stack.Screen name="index" options={{ headerShown: false }} />

@@ -1,15 +1,19 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, Alert, KeyboardAvoidingView, Platform } from 'react-native';
 import { useRouter } from 'expo-router';
-import { useSignIn, useSignUp, useUser } from '@clerk/clerk-expo';
+import { useSignIn, useSignUp, useUser, useOAuth, useAuth } from '@clerk/clerk-expo';
+import * as WebBrowser from 'expo-web-browser';
 import { colors, spacing, borderRadius } from '../../src/theme';
 import { getSupabase } from '../../src/lib/supabase';
+
+WebBrowser.maybeCompleteAuthSession();
 
 type Step = 'email' | 'signin' | 'signup';
 
 export default function JobseekerAuth() {
   const router = useRouter();
   const { isSignedIn, user: clerkUser } = useUser();
+  const { getToken } = useAuth();
   const { signIn, setActive: setSignInActive } = useSignIn();
   const { signUp, setActive: setSignUpActive } = useSignUp();
   const redirected = useRef(false);
@@ -21,6 +25,24 @@ export default function JobseekerAuth() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [checking, setChecking] = useState(false);
+  const { startOAuthFlow } = useOAuth({ strategy: 'oauth_google' });
+
+  const handleGoogleSignIn = useCallback(async () => {
+    setLoading(true);
+    setError('');
+    try {
+      const { createdSessionId, setActive } = await startOAuthFlow({
+        redirectUrl: 'remotehive://oauth-native-callback',
+      });
+      if (createdSessionId && setActive) {
+        await setActive({ session: createdSessionId });
+      }
+    } catch (e) {
+      console.error('Google sign-in error:', e);
+      setError('Google sign-in failed. Try email instead.');
+    }
+    setLoading(false);
+  }, [startOAuthFlow]);
 
   // Handle redirect after sign-in state changes
   useEffect(() => {
@@ -29,7 +51,9 @@ export default function JobseekerAuth() {
     
     const doRedirect = async () => {
       try {
-        const { data } = await getSupabase()
+        const token = await getToken({ template: 'supabase' });
+        const supabase = getSupabase(token || undefined);
+        const { data } = await supabase
           .from('users')
           .select('id')
           .eq('clerk_id', clerkUser.id)
@@ -65,7 +89,9 @@ export default function JobseekerAuth() {
     setChecking(true);
     setError('');
     try {
-      const { data } = await getSupabase()
+      const token = await getToken({ template: 'supabase' });
+      const supabase = getSupabase(token || undefined);
+      const { data } = await supabase
         .from('users')
         .select('clerk_id')
         .eq('email', email.toLowerCase().trim())
@@ -133,6 +159,21 @@ export default function JobseekerAuth() {
         <TouchableOpacity style={styles.primaryBtn} onPress={checkEmail} disabled={checking}>
           {checking ? <ActivityIndicator color="#fff" /> : <Text style={styles.primaryBtnText}>Continue</Text>}
         </TouchableOpacity>
+
+        <View style={styles.divider}>
+          <View style={styles.dividerLine} />
+          <Text style={styles.dividerText}>or</Text>
+          <View style={styles.dividerLine} />
+        </View>
+
+        <TouchableOpacity style={styles.googleBtn} onPress={handleGoogleSignIn} disabled={loading}>
+          {loading ? <ActivityIndicator color="#fff" /> : (
+            <View style={styles.googleBtnContent}>
+              <Text style={styles.googleIcon}>G</Text>
+              <Text style={styles.googleBtnText}>Continue with Google</Text>
+            </View>
+          )}
+        </TouchableOpacity>
         
         <View style={styles.footer}>
           <Text style={styles.footerText}>Secure sign-in powered by Clerk</Text>
@@ -177,6 +218,17 @@ const styles = StyleSheet.create({
   primaryBtnText: { color: colors.white, fontSize: 16, fontWeight: '600' },
   switchText: { textAlign: 'center', color: colors.primary, fontSize: 14 },
   loadingText: { marginTop: spacing.md, color: colors.textSecondary, fontSize: 14, textAlign: 'center' },
+  divider: { flexDirection: 'row', alignItems: 'center', marginVertical: spacing.md },
+  dividerLine: { flex: 1, height: 1, backgroundColor: colors.border },
+  dividerText: { marginHorizontal: spacing.md, color: colors.textTertiary, fontSize: 13 },
+  googleBtn: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
+    backgroundColor: colors.white, paddingVertical: 14, borderRadius: borderRadius.md,
+    borderWidth: 1, borderColor: colors.border,
+  },
+  googleBtnContent: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
+  googleIcon: { fontSize: 18, fontWeight: '700', color: '#4285F4' },
+  googleBtnText: { color: colors.text, fontSize: 16, fontWeight: '600' },
   footer: { marginTop: spacing.xl, alignItems: 'center' },
   footerText: { color: colors.textTertiary, fontSize: 12 },
 });

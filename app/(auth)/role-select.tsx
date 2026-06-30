@@ -1,13 +1,14 @@
 import { useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image, Animated } from 'react-native';
 import { useRouter } from 'expo-router';
-import { useUser } from '@clerk/clerk-expo';
+import { useUser, useAuth } from '@clerk/clerk-expo';
 import { colors, spacing, borderRadius } from '../../src/theme';
 import { getSupabase } from '../../src/lib/supabase';
 
 export default function RoleSelect() {
   const router = useRouter();
   const { isSignedIn, user: clerkUser } = useUser();
+  const { getToken } = useAuth();
   const redirected = useRef(false);
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(30)).current;
@@ -23,9 +24,16 @@ export default function RoleSelect() {
     if (redirected.current) return;
     if (isSignedIn && clerkUser) {
       redirected.current = true;
-      getSupabase().from('users').select('id').eq('clerk_id', clerkUser.id).maybeSingle().then(({ data }) => {
-        router.replace(data ? '/(jobseeker)' : '/(auth)/jobseeker-onboarding');
-      });
+      (async () => {
+        try {
+          const token = await getToken({ template: 'supabase' });
+          const supabase = getSupabase(token || undefined);
+          const { data } = await supabase.from('users').select('id').eq('clerk_id', clerkUser.id).maybeSingle();
+          router.replace(data ? '/(jobseeker)' : '/(auth)/jobseeker-onboarding');
+        } catch {
+          router.replace('/(auth)/jobseeker-onboarding');
+        }
+      })();
     }
   }, [isSignedIn, clerkUser]);
 
