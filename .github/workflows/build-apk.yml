@@ -103,7 +103,10 @@ jobs:
           } else {
             throw "sdkmanager not found"
           }
-          & cmd /c "echo y | `"$sm`" --sdk_root=`"$env:ANDROID_HOME`" `"cmake;3.22.1`"" 2>&1
+          # Accept all SDK licenses first
+          & cmd /c "echo y | `"$sm`" --licenses --sdk_root=`"$env:ANDROID_HOME`"" 2>&1
+          # Install CMake 3.22.1 with --accept_license flag
+          & cmd /c "`"$sm`" --sdk_root=`"$env:ANDROID_HOME`" --install `"cmake;3.22.1`"" 2>&1
 
       - name: Install dependencies
         run: npm ci --legacy-peer-deps
