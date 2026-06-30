@@ -92,21 +92,33 @@ jobs:
       - name: Accept licenses and install CMake 3.22.1
         shell: powershell
         run: |
+          $cmakeDir = Join-Path $env:ANDROID_HOME "cmake\3.22.1"
+          if (Test-Path "$cmakeDir\bin\cmake.exe") {
+            Write-Host "CMake 3.22.1 already installed, skipping"
+            exit 0
+          }
+          # Write all known license hashes to auto-accept
           $licensesDir = Join-Path $env:ANDROID_HOME "licenses"
           New-Item -ItemType Directory -Force -Path $licensesDir | Out-Null
-          Set-Content -Path (Join-Path $licensesDir "android-sdk-license") -Value "24333f8a63b6825ea9c5514f83c2827b002a9bda"
-          Set-Content -Path (Join-Path $licensesDir "android-sdk-preview-license") -Value "84831b9409646a918e30573bab4c9c91346d8abd"
-          if (Test-Path (Join-Path $env:ANDROID_HOME "cmdline-tools\latest\bin\sdkmanager.bat")) {
-            $sm = Join-Path $env:ANDROID_HOME "cmdline-tools\latest\bin\sdkmanager.bat"
-          } elseif (Test-Path (Join-Path $env:ANDROID_HOME "tools\bin\sdkmanager.bat")) {
-            $sm = Join-Path $env:ANDROID_HOME "tools\bin\sdkmanager.bat"
-          } else {
-            throw "sdkmanager not found"
+          @{
+            "android-sdk-license" = "24333f8a63b6825ea9c5514f83c2827b002a9bda"
+            "android-sdk-preview-license" = "84831b9409646a918e30573bab4c9c91346d8abd"
+          }.GetEnumerator() | ForEach-Object {
+            Set-Content -Path (Join-Path $licensesDir $_.Key) -Value $_.Value
           }
-          # Accept all SDK licenses first
-          & cmd /c "echo y | `"$sm`" --licenses --sdk_root=`"$env:ANDROID_HOME`"" 2>&1
-          # Install CMake 3.22.1 with --accept_license flag
-          & cmd /c "`"$sm`" --sdk_root=`"$env:ANDROID_HOME`" --install `"cmake;3.22.1`"" 2>&1
+          # Download CMake 3.22.1 archive directly from Google's SDK repo
+          $url = "https://dl.google.com/android/repository/cmake-3.22.1-windows-x86_64.zip"
+          $zip = "$env:TMP\cmake-3.22.1.zip"
+          Write-Host "Downloading CMake 3.22.1..."
+          curl.exe -sL "$url" -o "$zip"
+          if (-not (Test-Path $zip)) { throw "CMake download failed" }
+          Write-Host "Extracting to $cmakeDir..."
+          New-Item -ItemType Directory -Force -Path $cmakeDir | Out-Null
+          & tar.exe -xf "$zip" -C "$cmakeDir" --strip-components 1
+          Remove-Item $zip -Force
+          if (Test-Path "$cmakeDir\bin\cmake.exe") {
+            Write-Host "CMake 3.22.1 installed successfully"
+          } else { throw "CMake extraction failed" }
 
       - name: Install dependencies
         run: npm ci --legacy-peer-deps
