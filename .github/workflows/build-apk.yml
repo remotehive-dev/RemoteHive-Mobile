@@ -49,14 +49,21 @@ jobs:
         shell: powershell
         run: New-Item -ItemType Directory -Force -Path C:\tmp | Out-Null
 
-      - name: Ensure Android SDK licenses
+      - name: Accept licenses and install CMake 3.22.1
         shell: powershell
         run: |
           $licensesDir = Join-Path $env:ANDROID_HOME "licenses"
           New-Item -ItemType Directory -Force -Path $licensesDir | Out-Null
           Set-Content -Path (Join-Path $licensesDir "android-sdk-license") -Value "24333f8a63b6825ea9c5514f83c2827b002a9bda"
           Set-Content -Path (Join-Path $licensesDir "android-sdk-preview-license") -Value "84831b9409646a918e30573bab4c9c91346d8abd"
-          Set-Content -Path (Join-Path $licensesDir "cmake-license") -Value "e962f7be895dfa34f61357eba0eb18ec49db1e19"
+          if (Test-Path (Join-Path $env:ANDROID_HOME "cmdline-tools\latest\bin\sdkmanager.bat")) {
+            $sm = Join-Path $env:ANDROID_HOME "cmdline-tools\latest\bin\sdkmanager.bat"
+          } elseif (Test-Path (Join-Path $env:ANDROID_HOME "tools\bin\sdkmanager.bat")) {
+            $sm = Join-Path $env:ANDROID_HOME "tools\bin\sdkmanager.bat"
+          } else {
+            throw "sdkmanager not found"
+          }
+          & cmd /c "echo y | `"$sm`" --sdk_root=`"$env:ANDROID_HOME`" `"cmake;3.22.1`"" 2>&1
 
       - name: Install dependencies
         run: npm ci --legacy-peer-deps
