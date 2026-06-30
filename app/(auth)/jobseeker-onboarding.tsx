@@ -67,11 +67,11 @@ export default function JobseekerOnboarding() {
       };
       const { error } = await supabase.from('users').upsert(profile, { onConflict: 'clerk_id', ignoreDuplicates: false });
       if (error) {
-        if (error.code === '23505') { router.replace('/(jobseeker)'); return; }
+        if (error.code === '23505') { router.replace('/(auth)/onboarding-complete'); return; }
         Alert.alert('Error', error.message);
         return;
       }
-      router.replace('/(jobseeker)');
+      router.replace('/(auth)/onboarding-complete');
     } catch (e: any) {
       Alert.alert('Error', e.message || 'Failed to save profile');
     }

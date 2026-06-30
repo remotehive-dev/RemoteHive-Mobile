@@ -4,6 +4,7 @@ import { useRouter } from 'expo-router';
 import { useUser, useAuth } from '@clerk/clerk-expo';
 import { colors } from '../src/theme';
 import { getSupabase } from '../src/lib/supabase';
+import { auth as firebaseAuth } from '../src/lib/firebase';
 
 export default function SplashScreen() {
   const router = useRouter();
@@ -49,10 +50,20 @@ export default function SplashScreen() {
           router.replace(profile ? '/(jobseeker)' : '/(auth)/jobseeker-onboarding');
           return;
         }
+        const firebaseUser = firebaseAuth.currentUser;
+        if (firebaseUser?.phoneNumber) {
+          const { data: profile } = await getSupabase()
+            .from('users')
+            .select('id')
+            .eq('phone', firebaseUser.phoneNumber)
+            .maybeSingle();
+          router.replace(profile ? '/(jobseeker)' : '/(auth)/jobseeker-onboarding');
+          return;
+        }
       } catch (e) {
         console.error('Auth check failed', e);
       }
-      router.replace('/(auth)/role-select');
+      router.replace('/(auth)/jobseeker-auth');
     };
     redirect();
   }, [clerkLoaded, clerkSignedIn, clerkUser]);
