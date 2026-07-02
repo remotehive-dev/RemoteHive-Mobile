@@ -20,7 +20,7 @@ env:
 
 jobs:
   build:
-    runs-on: [self-hosted, Windows, android]
+    runs-on: [self-hosted, windows, android]
     steps:
       - uses: actions/checkout@v4
         with:
